@@ -1,0 +1,33 @@
+name: Daily Value Bet Signal
+
+on:
+  schedule:
+    # 09:00 Cyprus time (EEST = UTC+3) -> 06:00 UTC.
+    # Άλλαξέ το αν θες άλλη ώρα (πριν τα βραδινά ματς π.χ. 15:00 EEST -> "0 12 * * *")
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}   # επιτρέπει manual run από το tab Actions
+
+jobs:
+  send-signal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run value-bet agent
+        env:
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python value_bet_agent.py
