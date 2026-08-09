@@ -642,47 +642,47 @@ def format_message(results):
     today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
     if not results:
         return (
-            f"⚽ <b>Πρόταση — {today}</b>\n\n"
+            f"⚽ <b>Προτάσεις — {today}</b>\n\n"
             "Δεν βρέθηκε ΚΑΝΕΝΑ ματς σήμερα στις λίγκες που καλύπτω (ούτε καν "
             "χαμηλής σιγουρίας) — πιθανότατα πρόβλημα σύνδεσης με τα APIs, όχι "
             "ότι δεν παίζει τίποτα. Έλεγξε τα logs στο GitHub Actions."
         )
 
-    best = max(results, key=lambda r: (r["model_prob"] / 100, r["edge"] / 100, r["data_quality"]))
-    tier = confidence_tier(best)
+    # Μέχρι 4 ΑΝΕΞΑΡΤΗΤΑ picks/μέρα — το καθένα αξιολογείται στα δικά του
+    # μέτρα (δεν επιλέγονται για να "χωράνε" σε κάποιο συνδυασμένο στόχο).
+    # Ταξινόμηση: πρώτα όσα είναι πιο "σίγουρα" (μοντέλο + edge + data quality).
+    ranked = sorted(
+        results,
+        key=lambda r: (r["model_prob"] / 100, r["edge"] / 100, r["data_quality"]),
+        reverse=True,
+    )
+    top = ranked[:4]
 
-    h2h_note = {
-        True: "✅ Συμφωνεί με το head-to-head ιστορικό",
-        False: "⚠️ Το head-to-head ιστορικό δείχνει κάτι διαφορετικό",
-        None: "ℹ️ Ανεπαρκές head-to-head ιστορικό",
-    }[best["h2h_agrees"]]
-
-    lines = [
-        f"⚽ <b>Πρόταση — {today}</b>",
-        f"{tier}\n",
-        f"🏆 {best['competition']} — <b>{best['match']}</b>",
-        f"Pick: <b>{best['pick']}</b>  @ {best['odds']}",
-        f"Πιθανότητα μοντέλου: {best['model_prob']}%  |  Edge vs αγορά: +{best['edge']}%",
-        "",
-        f"📊 Ανάλυση: form έδρας/εκτός, βαθμολογία, head-to-head, "
-        f"{best['n_bookmakers']} bookmakers",
-        h2h_note,
-        "",
-        "🔎 Βρες το στο stoiximan.cy αναζητώντας το ματς παραπάνω.",
-        "",
-    ]
-
-    if tier.startswith("🔴"):
+    lines = [f"⚽ <b>Προτάσεις — {today}</b>\n"]
+    for i, r in enumerate(top, 1):
+        tier = confidence_tier(r)
+        h2h_note = {
+            True: "✅ H2H συμφωνεί",
+            False: "⚠️ H2H διαφωνεί",
+            None: "ℹ️ Ανεπαρκές H2H",
+        }[r["h2h_agrees"]]
         lines.append(
-            "⚠️ Σήμερα δεν υπήρχε κάτι δυνατό στις λίγκες που καλύπτω — αυτό "
-            "είναι απλά το λιγότερο κακό. Ελεύθερα πέρνα τη μέρα χωρίς παιχνίδι."
+            f"{i}. {tier}\n"
+            f"🏆 {r['competition']} — <b>{r['match']}</b>\n"
+            f"Pick: <b>{r['pick']}</b>  @ {r['odds']}  "
+            f"({r['model_prob']}% μοντέλο, +{r['edge']}% edge, {h2h_note}, "
+            f"{r['n_bookmakers']} bookmakers)\n"
         )
-    else:
-        lines.append(
-            "⚠️ Στατιστική εκτίμηση, ΟΧΙ εγγύηση. Ό,τι έχει πιθανότητα 65% "
-            "χάνει ~1 στις 3 φορές. Μην κυνηγάς χαμένα (chasing losses) και "
-            "μη ποντάρεις κάτι που δεν αντέχεις να χάσεις."
-        )
+
+    lines.append("🔎 Βρες τα στο stoiximan.cy αναζητώντας τα ματς παραπάνω.\n")
+    lines.append(
+        "⚠️ Αυτά είναι 4 ΑΝΕΞΑΡΤΗΤΑ picks, το καθένα με τη δική του σιγουριά "
+        "— ΔΕΝ είναι προτεινόμενο combo. Αν τα παίξεις όλα μαζί σε ένα "
+        "combo, ο συνδυασμένος κίνδυνος πολλαπλασιάζεται (ακόμα κι αν το "
+        "καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν <50% να βγουν όλα). "
+        "Στατιστική εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις κάτι που δεν "
+        "αντέχεις να χάσεις."
+    )
 
     return "\n".join(lines)
 
