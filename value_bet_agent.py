@@ -26,6 +26,7 @@ import os
 import sys
 import math
 import time
+import html
 import requests
 from datetime import datetime, timezone
 from itertools import product
@@ -621,6 +622,8 @@ def send_telegram(text):
     r = requests.post(url, data={
         "chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True,
     }, timeout=20)
+    if not r.ok:
+        print(f"Telegram error response: {r.status_code} {r.text}")
     r.raise_for_status()
 
 
@@ -666,10 +669,13 @@ def format_message(results):
             False: "⚠️ H2H διαφωνεί",
             None: "ℹ️ Ανεπαρκές H2H",
         }[r["h2h_agrees"]]
+        competition = html.escape(str(r["competition"]))
+        match = html.escape(str(r["match"]))
+        pick = html.escape(str(r["pick"]))
         lines.append(
             f"{i}. {tier}\n"
-            f"🏆 {r['competition']} — <b>{r['match']}</b>\n"
-            f"Pick: <b>{r['pick']}</b>  @ {r['odds']}  "
+            f"🏆 {competition} — <b>{match}</b>\n"
+            f"Pick: <b>{pick}</b>  @ {r['odds']}  "
             f"({r['model_prob']}% μοντέλο, +{r['edge']}% edge, {h2h_note}, "
             f"{r['n_bookmakers']} bookmakers)\n"
         )
@@ -679,9 +685,9 @@ def format_message(results):
         "⚠️ Αυτά είναι 4 ΑΝΕΞΑΡΤΗΤΑ picks, το καθένα με τη δική του σιγουριά "
         "— ΔΕΝ είναι προτεινόμενο combo. Αν τα παίξεις όλα μαζί σε ένα "
         "combo, ο συνδυασμένος κίνδυνος πολλαπλασιάζεται (ακόμα κι αν το "
-        "καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν <50% να βγουν όλα). "
-        "Στατιστική εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις κάτι που δεν "
-        "αντέχεις να χάσεις."
+        "καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν λιγότερο από 50% "
+        "να βγουν όλα). Στατιστική εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις "
+        "κάτι που δεν αντέχεις να χάσεις."
     )
 
     return "\n".join(lines)
