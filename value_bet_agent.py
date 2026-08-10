@@ -407,19 +407,22 @@ def find_matching_event(fixture, odds_events):
 # Core pipeline
 # ---------------------------------------------------------------------------
 
-def analyze_competition(comp_code, sport_key, results):
+def analyze_competition(comp_code, sport_key, results, stats):
     try:
         fixtures = get_todays_fixtures(comp_code)
     except Exception as e:
         print(f"[{comp_code}] fixtures error: {e}")
+        stats["errors"] += 1
         return
     if not fixtures:
         return
+    stats["fixtures_found"] += len(fixtures)
 
     try:
         odds_events = get_odds_for_sport(sport_key)
     except Exception as e:
         print(f"[{comp_code}] odds error: {e}")
+        stats["errors"] += 1
         return
 
     ppg_table = get_standings(comp_code)
@@ -510,7 +513,7 @@ def analyze_competition(comp_code, sport_key, results):
         })
 
 
-def analyze_af_league(league_name, league_id, odds_sport_key, results):
+def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
     """Ίδια λογική ανάλυσης με analyze_competition, αλλά πάνω σε
     API-Football δεδομένα (season stats αντί για ματς-ένα-ένα)."""
     if not API_FOOTBALL_KEY:
@@ -521,14 +524,17 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results):
         fixtures = get_af_todays_fixtures(league_id, season)
     except Exception as e:
         print(f"[AF {league_name}] fixtures error: {e}")
+        stats["errors"] += 1
         return
     if not fixtures:
         return
+    stats["fixtures_found"] += len(fixtures)
 
     try:
         odds_events = get_odds_for_sport(odds_sport_key)
     except Exception as e:
         print(f"[AF {league_name}] odds error: {e}")
+        stats["errors"] += 1
         return
 
     ppg_table = get_af_standings_ppg(league_id, season)
@@ -641,14 +647,28 @@ def confidence_tier(r):
     return "🔴 ΧΑΜΗΛΗΣ ΣΙΓΟΥΡΙΑΣ — καλύτερο διαθέσιμο σήμερα, όχι κάτι που θα έπαιζα κανονικά"
 
 
-def format_message(results):
+def format_message(results, stats):
     today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
     if not results:
+        if stats["errors"] > 0 and stats["fixtures_found"] == 0:
+            return (
+                f"⚽ <b>Προτάσεις — {today}</b>\n\n"
+                f"⚠️ {stats['errors']} λίγκες απέτυχαν λόγω σφάλματος API (δες logs "
+                "στο GitHub Actions) — δεν μπόρεσα να ελέγξω κανένα ματς σήμερα."
+            )
+        if stats["fixtures_found"] == 0:
+            return (
+                f"⚽ <b>Προτάσεις — {today}</b>\n\n"
+                "Δεν παίζει καμία διοργάνωση σήμερα σε καμία από τις λίγκες που "
+                "καλύπτω (φυσιολογικό π.χ. Δευτέρες, ή σε διεθνείς διακοπές) — "
+                "όχι πρόβλημα σύνδεσης. Ξαναδοκίμασε αύριο."
+            )
         return (
             f"⚽ <b>Προτάσεις — {today}</b>\n\n"
-            "Δεν βρέθηκε ΚΑΝΕΝΑ ματς σήμερα στις λίγκες που καλύπτω (ούτε καν "
-            "χαμηλής σιγουρίας) — πιθανότατα πρόβλημα σύνδεσης με τα APIs, όχι "
-            "ότι δεν παίζει τίποτα. Έλεγξε τα logs στο GitHub Actions."
+            f"Βρέθηκαν {stats['fixtures_found']} ματς σήμερα, αλλά κανένα δεν "
+            "είχε θετικό edge έναντι της αγοράς — δηλαδή η αγορά "
+            "'συμφωνούσε' με το μοντέλο παντού. Στατιστικά φυσιολογικό, όχι "
+            "σφάλμα. Καλύτερα καμία πρόταση παρά κάτι χωρίς πλεονέκτημα."
         )
 
     # Μέχρι 4 ΑΝΕΞΑΡΤΗΤΑ picks/μέρα — το καθένα αξιολογείται στα δικά του
@@ -708,13 +728,15 @@ def main():
         print("API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία.")
 
     results = []
+    stats = {"fixtures_found": 0, "errors": 0}
     for comp_code, sport_key in COMPETITIONS.items():
-        analyze_competition(comp_code, sport_key, results)
+        analyze_competition(comp_code, sport_key, results, stats)
 
     for league_name, cfg in AF_LEAGUES.items():
-        analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results)
+        analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results, stats)
 
-    message = format_message(results)
+    print(f"Σύνολο ματς σήμερα: {stats['fixtures_found']}, σφάλματα λιγκών: {stats['errors']}")
+    message = format_message(results, stats)
     print(message)
     send_telegram(message)
 
