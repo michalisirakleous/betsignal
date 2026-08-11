@@ -332,7 +332,16 @@ def match_probabilities(home_lambda, away_lambda):
     p_over = sum(p for (h, a), p in grid.items() if h + a > 2)
     p_under = 1 - p_over
 
-    return {"home": p_home, "draw": p_draw, "away": p_away, "over25": p_over, "under25": p_under}
+    return {
+        "home": p_home, "draw": p_draw, "away": p_away,
+        "over25": p_over, "under25": p_under,
+        # Double Chance — πιο "ασφαλή" markets (καλύπτουν 2 από τα 3 πιθανά
+        # αποτελέσματα), καλή προσθήκη όταν κανένα καθαρό 1X2 pick δεν έχει
+        # αρκετά υψηλή πιθανότητα από μόνο του.
+        "1x": p_home + p_draw,      # γηπεδούχος ή ισοπαλία
+        "x2": p_away + p_draw,      # φιλοξενούμενη ή ισοπαλία
+        "12": p_home + p_away,      # οποιοσδήποτε εκτός ισοπαλίας
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +351,10 @@ def match_probabilities(home_lambda, away_lambda):
 def get_odds_for_sport(sport_key):
     r = requests.get(
         f"{ODDS_BASE}/sports/{sport_key}/odds",
-        params={"apiKey": ODDS_API_KEY, "regions": "eu", "markets": "h2h,totals", "oddsFormat": "decimal"},
+        params={
+            "apiKey": ODDS_API_KEY, "regions": "eu",
+            "markets": "h2h,totals,double_chance", "oddsFormat": "decimal",
+        },
         timeout=20,
     )
     r.raise_for_status()
@@ -352,14 +364,16 @@ def get_odds_for_sport(sport_key):
 def market_summary(event):
     """Μαζεύει τιμές απ' ΟΛΑ τα bookmakers, ώστε να μπορούμε να δούμε πόσα
     συμφωνούν (consensus) και όχι μόνο 1 outlier τιμή."""
-    prices = {"home": [], "draw": [], "away": [], "over25": [], "under25": []}
+    prices = {"home": [], "draw": [], "away": [], "over25": [], "under25": [], "1x": [], "x2": [], "12": []}
+    home_team = event["home_team"]
+    away_team = event["away_team"]
     for bookmaker in event.get("bookmakers", []):
         for market in bookmaker.get("markets", []):
             if market["key"] == "h2h":
                 for outcome in market["outcomes"]:
-                    if outcome["name"] == event["home_team"]:
+                    if outcome["name"] == home_team:
                         prices["home"].append(outcome["price"])
-                    elif outcome["name"] == event["away_team"]:
+                    elif outcome["name"] == away_team:
                         prices["away"].append(outcome["price"])
                     else:
                         prices["draw"].append(outcome["price"])
@@ -371,6 +385,20 @@ def market_summary(event):
                         prices["over25"].append(outcome["price"])
                     elif outcome["name"] == "Under":
                         prices["under25"].append(outcome["price"])
+            elif market["key"] == "double_chance":
+                # Τα ονόματα διαφέρουν ανά bookmaker (π.χ. "Team A/Draw",
+                # "Team A or Draw") — matching με βάση ποια ονόματα ομάδων
+                # εμφανίζονται μέσα στο outcome name, όχι exact string.
+                for outcome in market["outcomes"]:
+                    name = outcome["name"]
+                    has_home = home_team in name
+                    has_away = away_team in name
+                    if has_home and has_away:
+                        prices["12"].append(outcome["price"])
+                    elif has_home:
+                        prices["1x"].append(outcome["price"])
+                    elif has_away:
+                        prices["x2"].append(outcome["price"])
 
     n_bookmakers = len(event.get("bookmakers", []))
     best = {k: (max(v) if v else 0) for k, v in prices.items()}
@@ -383,6 +411,21 @@ def implied_probs_no_vig(price_dict, keys):
     if total == 0:
         return {}
     return {k: v / total for k, v in raw.items()}
+
+
+def implied_probs_double_chance(price_dict):
+    """Το double chance ΔΕΝ είναι mutually exclusive partition (πάντα 2 από
+    τα 3 'κερδίζουν'), άρα δεν αφαιρούμε vig όπως στο 1X2. Σε δίκαιη αγορά
+    το άθροισμα των 3 πιθανοτήτων θα έκανε ακριβώς 2 (αφού πάντα κερδίζουν
+    2 στα 3) — κανονικοποιούμε προς αυτό αντί για προς το 1."""
+    keys = ["1x", "x2", "12"]
+    raw = {k: (1 / price_dict[k]) for k in keys if price_dict.get(k)}
+    if len(raw) < 2:
+        return {}
+    total = sum(raw.values())
+    if total == 0:
+        return {}
+    return {k: v * (2 / total) for k, v in raw.items()}
 
 
 # ---------------------------------------------------------------------------
@@ -459,6 +502,7 @@ def analyze_competition(comp_code, sport_key, results, stats):
 
         market_1x2 = implied_probs_no_vig(odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(odds, ["over25", "under25"])
+        market_dc = implied_probs_double_chance(odds)
 
         h2h = get_h2h(fx["id"])
 
@@ -470,6 +514,14 @@ def analyze_competition(comp_code, sport_key, results, stats):
         for key, label in [("over25", "Over 2.5 goals"), ("under25", "Under 2.5 goals")]:
             if key in market_ou and odds.get(key):
                 edge = model_probs[key] - market_ou[key]
+                candidates.append((edge, label, key, odds[key], model_probs[key]))
+        for key, label in [
+            ("1x", f"{home_name} ή Ισοπαλία (Double Chance)"),
+            ("x2", f"{away_name} ή Ισοπαλία (Double Chance)"),
+            ("12", f"{home_name} ή {away_name}, χωρίς ισοπαλία (Double Chance)"),
+        ]:
+            if key in market_dc and odds.get(key):
+                edge = model_probs[key] - market_dc[key]
                 candidates.append((edge, label, key, odds[key], model_probs[key]))
 
         positive_edge = [c for c in candidates if c[0] > 0]
@@ -572,6 +624,7 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
 
         market_1x2 = implied_probs_no_vig(odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(odds, ["over25", "under25"])
+        market_dc = implied_probs_double_chance(odds)
 
         h2h = get_af_h2h(home_id, away_id)
 
@@ -583,6 +636,14 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
         for key, label in [("over25", "Over 2.5 goals"), ("under25", "Under 2.5 goals")]:
             if key in market_ou and odds.get(key):
                 edge = model_probs[key] - market_ou[key]
+                candidates.append((edge, label, key, odds[key], model_probs[key]))
+        for key, label in [
+            ("1x", f"{home_name} ή Ισοπαλία (Double Chance)"),
+            ("x2", f"{away_name} ή Ισοπαλία (Double Chance)"),
+            ("12", f"{home_name} ή {away_name}, χωρίς ισοπαλία (Double Chance)"),
+        ]:
+            if key in market_dc and odds.get(key):
+                edge = model_probs[key] - market_dc[key]
                 candidates.append((edge, label, key, odds[key], model_probs[key]))
 
         positive_edge = [c for c in candidates if c[0] > 0]
@@ -702,14 +763,20 @@ def format_message(results, stats):
         )
 
     lines.append("🔎 Βρες τα στο stoiximan.cy αναζητώντας τα ματς παραπάνω.\n")
-    lines.append(
-        "⚠️ Αυτά είναι 4 ΑΝΕΞΑΡΤΗΤΑ picks, το καθένα με τη δική του σιγουριά "
-        "— ΔΕΝ είναι προτεινόμενο combo. Αν τα παίξεις όλα μαζί σε ένα "
-        "combo, ο συνδυασμένος κίνδυνος πολλαπλασιάζεται (ακόμα κι αν το "
-        "καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν λιγότερο από 50% "
-        "να βγουν όλα). Στατιστική εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις "
-        "κάτι που δεν αντέχεις να χάσεις."
-    )
+    if len(top) == 1:
+        lines.append(
+            "⚠️ Στατιστική εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις κάτι που "
+            "δεν αντέχεις να χάσεις."
+        )
+    else:
+        lines.append(
+            f"⚠️ Αυτά είναι {len(top)} ΑΝΕΞΑΡΤΗΤΑ picks, το καθένα με τη δική "
+            "του σιγουριά — ΔΕΝ είναι προτεινόμενο combo. Αν τα παίξεις όλα "
+            "μαζί σε ένα combo, ο συνδυασμένος κίνδυνος πολλαπλασιάζεται "
+            "(ακόμα κι αν το καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν "
+            "λιγότερο από 50% να βγουν όλα). Στατιστική εκτίμηση, ΟΧΙ "
+            "εγγύηση — μη ποντάρεις κάτι που δεν αντέχεις να χάσεις."
+        )
 
     return "\n".join(lines)
 
