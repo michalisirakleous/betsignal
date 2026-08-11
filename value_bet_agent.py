@@ -93,6 +93,7 @@ RECENT_MATCHES = 10          # πόσα πρόσφατα ματς τραβάμε
 MIN_VENUE_SAMPLE = 3         # ελάχιστα ματς-στο-ίδιο-venue για να τα εμπιστευτούμε
 REQUEST_PAUSE = 6.5          # football-data.org free tier = 10 req/min
 MIN_BOOKMAKERS = 2           # πόσα bookmakers min για να θεωρηθεί η τιμή αξιόπιστη
+STATE_FILE = "state/last_run_date.txt"   # για να μη στέλνει διπλό μήνυμα αν τρέξει 2 φορές
 
 
 # ---------------------------------------------------------------------------
@@ -713,6 +714,22 @@ def format_message(results, stats):
     return "\n".join(lines)
 
 
+def already_ran_today():
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE) as f:
+            if f.read().strip() == today:
+                return True
+    return False
+
+
+def mark_ran_today():
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        f.write(today)
+
+
 def main():
     missing = [n for n, v in [
         ("FOOTBALL_DATA_API_KEY", FOOTBALL_DATA_API_KEY),
@@ -724,8 +741,15 @@ def main():
         print(f"Λείπουν env vars: {missing}")
         sys.exit(1)
 
+    # Τρέχουμε 3 φορές/μέρα (ασφάλεια αν κάποιο cron καθυστερήσει/χαθεί από
+    # το GitHub) — αλλά στέλνουμε μήνυμα ΜΟΝΟ την πρώτη φορά που πετυχαίνει
+    # κάθε μέρα, ώστε να μην παίρνεις 2-3 ίδια μηνύματα.
+    if already_ran_today():
+        print("Ήδη στάλθηκε μήνυμα σήμερα — παραλείπεται αυτό το run.")
+        return
+
     if not API_FOOTBALL_KEY:
-        print("API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία.")
+        print("API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία/Βέλγιο.")
 
     results = []
     stats = {"fixtures_found": 0, "errors": 0}
@@ -739,6 +763,7 @@ def main():
     message = format_message(results, stats)
     print(message)
     send_telegram(message)
+    mark_ran_today()
 
 
 if __name__ == "__main__":
