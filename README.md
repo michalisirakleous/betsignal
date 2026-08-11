@@ -107,9 +107,10 @@
 Bundesliga, Ligue 1, Champions League, Championship, Primeira Liga,
 Eredivisie, Brasileirão, World Cup, Euro, Copa Libertadores.
 
-**Μέσω API-Football** (7, προαιρετικό): Ελλάδα (Super League), Αυστρία
+**Μέσω API-Football** (9, προαιρετικό): Ελλάδα (Super League), Αυστρία
 (Bundesliga), Ελβετία (Super League), Πολωνία (Ekstraklasa), Τουρκία
-(Süper Lig), Σκωτία (Premiership), Βέλγιο (Pro League).
+(Süper Lig), Σκωτία (Premiership), Βέλγιο (Pro League), UEFA Europa
+League, UEFA Conference League.
 
 Δεν καλύπτονται (δεν υπάρχει αξιόπιστη δωρεάν πηγή γι' αυτές): Κύπρος,
 MLS, J-League, και μικρότερες λίγκες γενικά.
