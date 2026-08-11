@@ -2,10 +2,18 @@ name: Daily Value Bet Signal
 
 on:
   schedule:
-    # 09:00 Cyprus time (EEST = UTC+3) -> 06:00 UTC.
-    # Άλλαξέ το αν θες άλλη ώρα (πριν τα βραδινά ματς π.χ. 15:00 EEST -> "0 12 * * *")
-    - cron: "0 6 * * *"
-  workflow_dispatch: {}   # επιτρέπει manual run από το tab Actions
+    # 3 προσπάθειες/μέρα ως ασφάλεια — το GitHub καμιά φορά καθυστερεί ή
+    # χάνει scheduled runs (γνωστό ζήτημα, όχι κάτι που φταίει ο κώδικάς μας).
+    # Ο agent στέλνει μήνυμα ΜΟΝΟ την πρώτη επιτυχημένη φορά κάθε μέρα
+    # (βλέπε state/last_run_date.txt) — οι άλλες 2 απλά τερματίζουν χωρίς
+    # να στείλουν τίποτα, άρα δεν παίρνεις διπλά μηνύματα.
+    - cron: "5 6 * * *"    # 09:05 Cyprus time (EEST, UTC+3)
+    - cron: "5 7 * * *"    # 10:05 Cyprus time — 2η προσπάθεια
+    - cron: "5 8 * * *"    # 11:05 Cyprus time — 3η προσπάθεια
+  workflow_dispatch: {}     # επιτρέπει manual run από το tab Actions
+
+permissions:
+  contents: write   # χρειάζεται για να αποθηκεύει το state/last_run_date.txt πίσω στο repo
 
 jobs:
   send-signal:
@@ -31,3 +39,13 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python value_bet_agent.py
+
+      - name: Save "already sent today" marker back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/last_run_date.txt
+          git diff --cached --quiet || git commit -m "Mark daily signal as sent"
+          git pull --rebase origin main
+          git push
+        continue-on-error: true   # αν αποτύχει το commit, δεν μπλοκάρει το job
