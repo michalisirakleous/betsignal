@@ -27,6 +27,7 @@ import sys
 import math
 import time
 import html
+import statistics
 import requests
 from datetime import datetime, timezone
 from itertools import product
@@ -84,6 +85,8 @@ AF_LEAGUES = {
     "Turkey Super Lig":          {"league_id": 203, "odds_key": "soccer_turkey_super_league"},
     "Scotland Premiership":      {"league_id": 179, "odds_key": "soccer_scotland_premiership"},
     "Belgium Pro League":        {"league_id": 144, "odds_key": "soccer_belgium_first_div"},
+    "UEFA Europa League":        {"league_id": 3,   "odds_key": "soccer_uefa_europa_league"},
+    "UEFA Conference League":    {"league_id": 848, "odds_key": "soccer_uefa_europa_conference_league"},
 }
 
 MIN_EDGE = 0.03              # edge για "Υψηλής σιγουρίας" tier
@@ -402,7 +405,15 @@ def market_summary(event):
 
     n_bookmakers = len(event.get("bookmakers", []))
     best = {k: (max(v) if v else 0) for k, v in prices.items()}
-    return {"best": best, "n_bookmakers": n_bookmakers}
+    # Η "δίκαιη πιθανότητα αγοράς" υπολογίζεται από τη MEDIAN τιμή (τυπικό
+    # περιθώριο ενός bookmaker, ~4-6%), ΟΧΙ από την καλύτερη τιμή ανάμεσα σε
+    # πολλά bookmakers — αυτό το δεύτερο δημιουργεί τεχνητά μηδενικό
+    # περιθώριο (σχεδόν 0% overround) που κάνει αδύνατο για το μοντέλο να
+    # βρει ποτέ edge. Η "best" τιμή παραμένει αυτή που θα έπαιρνες στην
+    # πράξη αν παίξεις — απλά δε χρησιμοποιείται για τον υπολογισμό της
+    # "δίκαιης" πιθανότητας.
+    median = {k: (statistics.median(v) if v else 0) for k, v in prices.items()}
+    return {"best": best, "median": median, "n_bookmakers": n_bookmakers}
 
 
 def implied_probs_no_vig(price_dict, keys):
@@ -493,16 +504,17 @@ def analyze_competition(comp_code, sport_key, results, stats):
             continue
 
         summary = market_summary(event)
-        odds = summary["best"]
+        odds = summary["best"]        # τιμή που θα έπαιρνες στην πράξη
+        fair_odds = summary["median"]  # για δίκαιη εκτίμηση πιθανότητας αγοράς
 
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
 
-        market_1x2 = implied_probs_no_vig(odds, ["home", "draw", "away"])
-        market_ou = implied_probs_no_vig(odds, ["over25", "under25"])
-        market_dc = implied_probs_double_chance(odds)
+        market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
+        market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
+        market_dc = implied_probs_double_chance(fair_odds)
 
         h2h = get_h2h(fx["id"])
 
@@ -615,16 +627,17 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
             continue
 
         summary = market_summary(event)
-        odds = summary["best"]
+        odds = summary["best"]        # τιμή που θα έπαιρνες στην πράξη
+        fair_odds = summary["median"]  # για δίκαιη εκτίμηση πιθανότητας αγοράς
 
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
 
-        market_1x2 = implied_probs_no_vig(odds, ["home", "draw", "away"])
-        market_ou = implied_probs_no_vig(odds, ["over25", "under25"])
-        market_dc = implied_probs_double_chance(odds)
+        market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
+        market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
+        market_dc = implied_probs_double_chance(fair_odds)
 
         h2h = get_af_h2h(home_id, away_id)
 
