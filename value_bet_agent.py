@@ -96,6 +96,7 @@ RECENT_MATCHES = 10          # πόσα πρόσφατα ματς τραβάμε
 MIN_VENUE_SAMPLE = 3         # ελάχιστα ματς-στο-ίδιο-venue για να τα εμπιστευτούμε
 REQUEST_PAUSE = 6.5          # football-data.org free tier = 10 req/min
 MIN_BOOKMAKERS = 2           # πόσα bookmakers min για να θεωρηθεί η τιμή αξιόπιστη
+MIN_TOTAL_SAMPLE = 3         # ελάχιστα συνολικά ματς (home_n+away_n) για να εμπιστευτούμε καθόλου τα στατιστικά μιας ομάδας — προστασία από αρχή σεζόν με 1-2 ματς δείγμα
 STATE_FILE = "state/last_run_date.txt"   # για να μη στέλνει διπλό μήνυμα αν τρέξει 2 φορές
 
 
@@ -321,7 +322,7 @@ def expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg, l
         home_lambda *= (1 + adj)
         away_lambda *= (1 - adj)
 
-    return max(home_lambda, 0.1), max(away_lambda, 0.1)
+    return max(min(home_lambda, 4.5), 0.3), max(min(away_lambda, 4.5), 0.3)
 
 
 def match_probabilities(home_lambda, away_lambda):
@@ -512,6 +513,10 @@ def analyze_competition(comp_code, sport_key, results, stats):
         away_split = split_home_away_stats(away_matches, away_id)
         if home_split["overall_gf"] is None or away_split["overall_gf"] is None:
             continue
+        home_total_n = home_split["home_n"] + home_split["away_n"]
+        away_total_n = away_split["home_n"] + away_split["away_n"]
+        if home_total_n < MIN_TOTAL_SAMPLE or away_total_n < MIN_TOTAL_SAMPLE:
+            continue
 
         event = find_matching_event(fx, odds_events)
         if not event:
@@ -634,6 +639,16 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
             print(f"[AF {league_name}] team stats error: {e}")
             continue
         if not home_split or not away_split or home_split["overall_gf"] is None or away_split["overall_gf"] is None:
+            continue
+        # ΚΡΙΣΙΜΟ: εδώ τα στατιστικά είναι ΜΟΝΟ της τρέχουσας σεζόν (season
+        # stats), όχι "τελευταία 10 ματς οποιασδήποτε διοργάνωσης" όπως στο
+        # football-data.org pipeline. Στην αρχή της σεζόν (1-2 ματς παιγμένα)
+        # αυτό δίνει εξωφρενικά/ασταθή νούμερα (π.χ. ομάδα με ένα 5-0 βγάζει
+        # "μέσο όρο" 5 γκολ/ματς) — προτιμούμε να προσπεράσουμε το ματς παρά
+        # να στείλουμε ψευδές "value" pick.
+        home_total_n = home_split["home_n"] + home_split["away_n"]
+        away_total_n = away_split["home_n"] + away_split["away_n"]
+        if home_total_n < MIN_TOTAL_SAMPLE or away_total_n < MIN_TOTAL_SAMPLE:
             continue
 
         event = find_matching_event(
