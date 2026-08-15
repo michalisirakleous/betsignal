@@ -352,16 +352,30 @@ def match_probabilities(home_lambda, away_lambda):
 # ---------------------------------------------------------------------------
 
 def get_odds_for_sport(sport_key):
-    r = requests.get(
-        f"{ODDS_BASE}/sports/{sport_key}/odds",
-        params={
-            "apiKey": ODDS_API_KEY, "regions": "eu",
-            "markets": "h2h,totals,double_chance", "oddsFormat": "decimal",
-        },
-        timeout=20,
-    )
-    r.raise_for_status()
-    return r.json()
+    """Ζητάει h2h+totals+double_chance μαζί. Αν το double_chance δεν
+    υποστηρίζεται για αυτό το sport_key, το the-odds-api επιστρέφει 422
+    για ΟΛΟΚΛΗΡΟ το request (όχι μόνο το unsupported market) — οπότε κάνουμε
+    fallback στα βασικά markets αντί να χάνουμε τα πάντα για μια λίγκα."""
+    base_params = {"apiKey": ODDS_API_KEY, "regions": "eu", "oddsFormat": "decimal"}
+    try:
+        r = requests.get(
+            f"{ODDS_BASE}/sports/{sport_key}/odds",
+            params={**base_params, "markets": "h2h,totals,double_chance"},
+            timeout=20,
+        )
+        r.raise_for_status()
+        return r.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None and e.response.status_code == 422:
+            print(f"  (double_chance μη διαθέσιμο για {sport_key}, fallback σε h2h+totals)")
+            r = requests.get(
+                f"{ODDS_BASE}/sports/{sport_key}/odds",
+                params={**base_params, "markets": "h2h,totals"},
+                timeout=20,
+            )
+            r.raise_for_status()
+            return r.json()
+        raise
 
 
 def market_summary(event):
