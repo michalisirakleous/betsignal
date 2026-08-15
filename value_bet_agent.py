@@ -536,6 +536,8 @@ def analyze_competition(comp_code, sport_key, results, stats):
                 edge = model_probs[key] - market_dc[key]
                 candidates.append((edge, label, key, odds[key], model_probs[key]))
 
+        debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
+
         positive_edge = [c for c in candidates if c[0] > 0]
         if not positive_edge:
             continue
@@ -659,6 +661,8 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
                 edge = model_probs[key] - market_dc[key]
                 candidates.append((edge, label, key, odds[key], model_probs[key]))
 
+        debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
+
         positive_edge = [c for c in candidates if c[0] > 0]
         if not positive_edge:
             continue
@@ -696,6 +700,20 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
             "bookmaker_consensus": summary["n_bookmakers"] >= MIN_BOOKMAKERS,
             "n_bookmakers": summary["n_bookmakers"],
         })
+
+
+def debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates):
+    """Τυπώνει μοντέλο vs αγορά για κάθε ματς στα GitHub Actions logs, ώστε
+    να μπορούμε να διαγνώσουμε γιατί δε βρίσκεται edge, χωρίς να μαντεύουμε."""
+    best_edge = max((c[0] for c in candidates), default=None)
+    print(
+        f"  [{home_name} - {away_name}] "
+        f"model(H/D/A)={model_probs['home']:.3f}/{model_probs['draw']:.3f}/{model_probs['away']:.3f} "
+        f"market(H/D/A)={market_1x2.get('home', 0):.3f}/{market_1x2.get('draw', 0):.3f}/{market_1x2.get('away', 0):.3f} "
+        f"model(O/U 2.5)={model_probs['over25']:.3f}/{model_probs['under25']:.3f} "
+        f"market(O/U 2.5)={market_ou.get('over25', 0):.3f}/{market_ou.get('under25', 0):.3f} "
+        f"best_edge={best_edge if best_edge is None else round(best_edge, 4)}"
+    )
 
 
 def send_telegram(text):
