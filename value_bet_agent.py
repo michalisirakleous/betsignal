@@ -27,6 +27,7 @@ import sys
 import math
 import time
 import html
+import json
 import statistics
 import requests
 from datetime import datetime, timezone
@@ -477,7 +478,7 @@ def find_matching_event(fixture, odds_events):
 # Core pipeline
 # ---------------------------------------------------------------------------
 
-def analyze_competition(comp_code, sport_key, results, stats):
+def analyze_competition(comp_code, sport_key, results, stats, calibration_factor=1.0):
     try:
         fixtures = get_todays_fixtures(comp_code)
     except Exception as e:
@@ -530,6 +531,7 @@ def analyze_competition(comp_code, sport_key, results, stats):
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
+        model_probs = apply_calibration(model_probs, calibration_factor)
 
         market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
@@ -596,10 +598,13 @@ def analyze_competition(comp_code, sport_key, results, stats):
             "h2h_agrees": h2h_agrees,
             "bookmaker_consensus": bookmaker_consensus,
             "n_bookmakers": summary["n_bookmakers"],
+            "fixture_id": fx["id"],
+            "source": "fd",
+            "market_key": key,
         })
 
 
-def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
+def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, calibration_factor=1.0):
     """Ίδια λογική ανάλυσης με analyze_competition, αλλά πάνω σε
     API-Football δεδομένα (season stats αντί για ματς-ένα-ένα)."""
     if not API_FOOTBALL_KEY:
@@ -665,6 +670,7 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
+        model_probs = apply_calibration(model_probs, calibration_factor)
 
         market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
@@ -728,6 +734,9 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats):
             "h2h_agrees": h2h_agrees,
             "bookmaker_consensus": summary["n_bookmakers"] >= MIN_BOOKMAKERS,
             "n_bookmakers": summary["n_bookmakers"],
+            "fixture_id": fx["fixture"]["id"],
+            "source": "af",
+            "market_key": key,
         })
 
 
@@ -769,9 +778,21 @@ def confidence_tier(r):
     return "🔴 ΧΑΜΗΛΗΣ ΣΙΓΟΥΡΙΑΣ — καλύτερο διαθέσιμο σήμερα, όχι κάτι που θα έπαιζα κανονικά"
 
 
-def format_message(results, stats):
+def select_top_picks(results, n=4):
+    """Ταξινόμηση: πρώτα όσα είναι πιο 'σίγουρα' (μοντέλο + edge + data
+    quality). Το καθένα αξιολογείται στα δικά του μέτρα (δεν επιλέγονται
+    για να 'χωράνε' σε κάποιο συνδυασμένο στόχο)."""
+    ranked = sorted(
+        results,
+        key=lambda r: (r["model_prob"] / 100, r["edge"] / 100, r["data_quality"]),
+        reverse=True,
+    )
+    return ranked[:n]
+
+
+def format_message(top, stats):
     today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
-    if not results:
+    if not top:
         if stats["errors"] > 0 and stats["fixtures_found"] == 0:
             return (
                 f"⚽ <b>Προτάσεις — {today}</b>\n\n"
@@ -792,16 +813,6 @@ def format_message(results, stats):
             "'συμφωνούσε' με το μοντέλο παντού. Στατιστικά φυσιολογικό, όχι "
             "σφάλμα. Καλύτερα καμία πρόταση παρά κάτι χωρίς πλεονέκτημα."
         )
-
-    # Μέχρι 4 ΑΝΕΞΑΡΤΗΤΑ picks/μέρα — το καθένα αξιολογείται στα δικά του
-    # μέτρα (δεν επιλέγονται για να "χωράνε" σε κάποιο συνδυασμένο στόχο).
-    # Ταξινόμηση: πρώτα όσα είναι πιο "σίγουρα" (μοντέλο + edge + data quality).
-    ranked = sorted(
-        results,
-        key=lambda r: (r["model_prob"] / 100, r["edge"] / 100, r["data_quality"]),
-        reverse=True,
-    )
-    top = ranked[:4]
 
     lines = [f"⚽ <b>Προτάσεις — {today}</b>\n"]
     for i, r in enumerate(top, 1):
@@ -857,6 +868,172 @@ def mark_ran_today():
         f.write(today)
 
 
+# ---------------------------------------------------------------------------
+# Self-calibration: καταγραφή picks -> έλεγχος πραγματικών αποτελεσμάτων ->
+# μικρή, φραγμένη διόρθωση του μοντέλου αν είναι συστηματικά υπερβολικά
+# σίγουρο (ή όχι αρκετά). ΔΕΝ αλλάζει τη λογική επιλογής pick (πάντα το
+# καλύτερο διαθέσιμο, με βάση θετικό edge) — αλλάζει μόνο πόσο "μετριάζει"
+# τις πιθανότητες του μοντέλου πριν υπολογιστεί το edge. Αν δεν υπάρχουν
+# αρκετά resolved picks ή δεν εντοπίζεται συστηματικό πρόβλημα, ο
+# συντελεστής μένει 1.0 (καμία αλλαγή) — καμία υποχρέωση να "βρει κάτι".
+# ---------------------------------------------------------------------------
+
+HISTORY_FILE = "state/pick_history.json"
+MIN_RESOLVED_FOR_CALIBRATION = 15   # ελάχιστα resolved picks πριν εμπιστευτούμε καθόλου calibration
+CALIBRATION_MIN = 0.80               # όρια ασφαλείας — ποτέ πάνω από ±20% διόρθωση
+CALIBRATION_MAX = 1.20
+CALIBRATION_STEP = 0.02              # πόσο αλλάζει ο συντελεστής ανά run (αργή, σταθερή προσαρμογή)
+
+
+def load_json_state(path, default):
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return default
+
+
+def save_json_state(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def load_history():
+    return load_json_state(HISTORY_FILE, {"picks": [], "calibration_factor": 1.0})
+
+
+def apply_calibration(probs, factor):
+    """Συρρικνώνει (factor<1) ή διαστέλλει (factor>1) τις πιθανότητες γύρω
+    από το 0.5. factor=1.0 σημαίνει καμία αλλαγή."""
+    return {k: max(0.01, min(0.99, 0.5 + (p - 0.5) * factor)) for k, p in probs.items()}
+
+
+def pick_won(market_key, home_goals, away_goals):
+    if market_key == "home":
+        return home_goals > away_goals
+    if market_key == "draw":
+        return home_goals == away_goals
+    if market_key == "away":
+        return home_goals < away_goals
+    if market_key == "over25":
+        return (home_goals + away_goals) > 2
+    if market_key == "under25":
+        return (home_goals + away_goals) <= 2
+    if market_key == "1x":
+        return home_goals >= away_goals
+    if market_key == "x2":
+        return away_goals >= home_goals
+    if market_key == "12":
+        return home_goals != away_goals
+    return None
+
+
+def get_final_score(source, fixture_id):
+    """Επιστρέφει (home_goals, away_goals) αν το ματς έχει τελειώσει, αλλιώς
+    None (ή αν αποτύχει το API call — ξαναδοκιμάζουμε στο επόμενο run)."""
+    try:
+        if source == "fd":
+            data = fd_get(f"/matches/{fixture_id}")
+            if data.get("status") != "FINISHED":
+                return None
+            score = data.get("score", {}).get("fullTime", {})
+            h, a = score.get("home"), score.get("away")
+            return (h, a) if h is not None and a is not None else None
+        else:  # "af"
+            data = af_get("/fixtures", params={"id": fixture_id})
+            resp = data.get("response", [])
+            if not resp:
+                return None
+            fx = resp[0]
+            if fx.get("fixture", {}).get("status", {}).get("short") != "FT":
+                return None
+            goals = fx.get("goals", {})
+            h, a = goals.get("home"), goals.get("away")
+            return (h, a) if h is not None and a is not None else None
+    except Exception as e:
+        print(f"  (αποτυχία ελέγχου αποτελέσματος fixture {fixture_id}: {e})")
+        return None
+
+
+def resolve_pending_picks(history):
+    """Ελέγχει τα picks που στάλθηκαν πριν 1+ μέρες και δεν έχουν ακόμα
+    καταγεγραμμένο αποτέλεσμα — αν το ματς έχει τελειώσει, καταγράφει
+    νίκη/ήττα. Ματς που δεν έχουν τελειώσει ακόμα (π.χ. αναβλήθηκαν)
+    ξαναδοκιμάζονται στο επόμενο run, χωρίς πρόβλημα."""
+    today = datetime.now(timezone.utc).date()
+    resolved_count = 0
+    for pick in history["picks"]:
+        if pick.get("result") is not None:
+            continue
+        pick_date = datetime.strptime(pick["date"], "%Y-%m-%d").date()
+        if (today - pick_date).days < 1:
+            continue  # πολύ πρόσφατο, το ματς μπορεί να μην έχει παιχτεί ακόμα
+        score = get_final_score(pick["source"], pick["fixture_id"])
+        if score is None:
+            continue
+        home_goals, away_goals = score
+        won = pick_won(pick["market_key"], home_goals, away_goals)
+        if won is None:
+            continue
+        pick["result"] = "win" if won else "loss"
+        pick["final_score"] = f"{home_goals}-{away_goals}"
+        resolved_count += 1
+    if resolved_count:
+        print(f"Επιλύθηκαν {resolved_count} παλιά picks (νίκη/ήττα καταγράφηκε).")
+    return history
+
+
+def update_calibration(history):
+    """Συγκρίνει το στατιστικό μοντέλο (πιθανότητα που δήλωσε) με το
+    πραγματικό ποσοστό επιτυχίας στα resolved picks. Μικρό, φραγμένο βήμα
+    διόρθωσης ανά run — ποτέ απότομη αλλαγή."""
+    resolved = [p for p in history["picks"] if p.get("result") is not None]
+    current_factor = history.get("calibration_factor", 1.0)
+
+    if len(resolved) < MIN_RESOLVED_FOR_CALIBRATION:
+        print(f"Calibration: μόνο {len(resolved)} resolved picks (χρειάζονται {MIN_RESOLVED_FOR_CALIBRATION}+) — καμία αλλαγή.")
+        return current_factor
+
+    recent = resolved[-100:]  # τα πιο πρόσφατα 100, ώστε να προσαρμόζεται με τον καιρό
+    avg_predicted = sum(p["model_prob_raw"] for p in recent) / len(recent)
+    actual_hit_rate = sum(1 for p in recent if p["result"] == "win") / len(recent)
+
+    print(f"Calibration check: {len(recent)} resolved picks, μέση δηλωμένη πιθανότητα={avg_predicted:.3f}, πραγματικό ποσοστό επιτυχίας={actual_hit_rate:.3f}")
+
+    diff = actual_hit_rate - avg_predicted
+    if diff < -0.03:      # το μοντέλο είναι υπερβολικά σίγουρο -> συρρίκνωση
+        new_factor = current_factor - CALIBRATION_STEP
+    elif diff > 0.03:     # το μοντέλο είναι υπερβολικά συντηρητικό -> διαστολή
+        new_factor = current_factor + CALIBRATION_STEP
+    else:
+        new_factor = current_factor  # καλή βαθμονόμηση ήδη, καμία αλλαγή
+
+    new_factor = max(CALIBRATION_MIN, min(CALIBRATION_MAX, new_factor))
+    if new_factor != current_factor:
+        print(f"Calibration factor: {current_factor:.3f} -> {new_factor:.3f}")
+    return new_factor
+
+
+def record_new_picks(history, top_picks, today_str):
+    for p in top_picks:
+        history["picks"].append({
+            "date": today_str,
+            "source": p["source"],
+            "fixture_id": p["fixture_id"],
+            "market_key": p["market_key"],
+            "match": p["match"],
+            "pick": p["pick"],
+            "odds": p["odds"],
+            "model_prob_raw": p["model_prob"] / 100,
+            "result": None,
+        })
+    # Κρατάμε μόνο τα τελευταία 500 picks ώστε το αρχείο να μη μεγαλώνει απεριόριστα
+    history["picks"] = history["picks"][-500:]
+
+
 def main():
     missing = [n for n, v in [
         ("FOOTBALL_DATA_API_KEY", FOOTBALL_DATA_API_KEY),
@@ -867,6 +1044,15 @@ def main():
     if missing:
         print(f"Λείπουν env vars: {missing}")
         sys.exit(1)
+
+    # --- Self-calibration: πρώτα λύνουμε παλιά picks, ΑΝΕΞΑΡΤΗΤΑ από το αν
+    # θα στείλουμε μήνυμα σήμερα (τρέχει σε κάθε attempt, όχι μόνο στο πρώτο
+    # επιτυχημένο) ώστε η μάθηση να συνεχίζεται κάθε μέρα.
+    history = load_history()
+    history = resolve_pending_picks(history)
+    calibration_factor = update_calibration(history)
+    history["calibration_factor"] = calibration_factor
+    save_json_state(HISTORY_FILE, history)
 
     # Τρέχουμε 3 φορές/μέρα (ασφάλεια αν κάποιο cron καθυστερήσει/χαθεί από
     # το GitHub) — αλλά στέλνουμε μήνυμα ΜΟΝΟ την πρώτη φορά που πετυχαίνει
@@ -881,16 +1067,23 @@ def main():
     results = []
     stats = {"fixtures_found": 0, "errors": 0}
     for comp_code, sport_key in COMPETITIONS.items():
-        analyze_competition(comp_code, sport_key, results, stats)
+        analyze_competition(comp_code, sport_key, results, stats, calibration_factor)
 
     for league_name, cfg in AF_LEAGUES.items():
-        analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results, stats)
+        analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results, stats, calibration_factor)
 
     print(f"Σύνολο ματς σήμερα: {stats['fixtures_found']}, σφάλματα λιγκών: {stats['errors']}")
-    message = format_message(results, stats)
+    top = select_top_picks(results, n=4)
+    message = format_message(top, stats)
     print(message)
     send_telegram(message)
     mark_ran_today()
+
+    if top:
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        history = load_history()  # ξαναφόρτωμα σε περίπτωση αλλαγών
+        record_new_picks(history, top, today_str)
+        save_json_state(HISTORY_FILE, history)
 
 
 if __name__ == "__main__":
