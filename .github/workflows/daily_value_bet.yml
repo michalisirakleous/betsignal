@@ -40,12 +40,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python value_bet_agent.py
 
-      - name: Save "already sent today" marker back to repo
+      - name: Save state back to repo (already-sent marker + pick history/calibration)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/last_run_date.txt
-          git diff --cached --quiet || git commit -m "Mark daily signal as sent"
+          git add state/
+          git diff --cached --quiet || git commit -m "Update state (daily marker + pick history/calibration)"
           git pull --rebase origin main
           git push
         continue-on-error: true   # αν αποτύχει το commit, δεν μπλοκάρει το job
