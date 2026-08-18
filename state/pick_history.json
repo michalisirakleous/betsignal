@@ -57,6 +57,18 @@
       "pick": "Over 2.5 goals",
       "odds": 1.88,
       "model_prob_raw": 0.716,
+      "result": "loss",
+      "final_score": "1-1"
+    },
+    {
+      "date": "2026-08-18",
+      "source": "fd",
+      "fixture_id": 564463,
+      "market_key": "home",
+      "match": "CS Independiente Rivadavia - Fluminense FC",
+      "pick": "CS Independiente Rivadavia \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.58,
+      "model_prob_raw": 0.6990000000000001,
       "result": null
     }
   ],
