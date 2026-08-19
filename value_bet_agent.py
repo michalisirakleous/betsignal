@@ -2,7 +2,6 @@
 Value-Bet Telegram Agent
 =========================
 Τρέχει μια φορά την ημέρα (μέσω GitHub Actions cron).
-
 Ανάλυση ανά ματς (ΟΧΙ μόνο τιμή/αποδόσεις):
 1. Fixtures της ημέρας (football-data.org).
 2. Recent form ΚΑΘΕ ομάδας, χωρισμένο σε "στο γήπεδό της" / "εκτός έδρας"
@@ -16,14 +15,12 @@ Value-Bet Telegram Agent
    έχουμε αρκετά δεδομένα, αν το H2H συμφωνεί, αν η αγορά συμφωνεί με
    ποιος είναι φαβορί.
 8. Στέλνει 1 πρόταση/μέρα στο Telegram, πάντα, με ετικέτα σιγουριάς.
-
 ΣΗΜΑΝΤΙΚΟ: Στατιστικό εργαλείο, ΟΧΙ εγγύηση κέρδους. Το στοίχημα έχει
 πάντα ρίσκο. Στοιχηματίζεις πάντα με δικά σου κριτήρια και μόνο ό,τι
 μπορείς να χάσεις.
 """
-
 from __future__ import annotations
-
+import calendar
 import html
 import json
 import logging
@@ -32,33 +29,27 @@ import os
 import statistics
 import sys
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from itertools import product
 from typing import Any
-
 import requests
-
 try:
     from rapidfuzz import fuzz
-
     HAS_RAPIDFUZZ = True
 except ImportError:
     HAS_RAPIDFUZZ = False
-
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-
 FOOTBALL_DATA_API_KEY = os.environ.get("FOOTBALL_DATA_API_KEY", "")
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
 API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-
 FD_BASE = "https://api.football-data.org/v4"
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 AF_BASE = "https://v3.football.api-sports.io"
-
 COMPETITIONS = {
     "PL": "soccer_epl",
     "PD": "soccer_spain_la_liga",
@@ -74,13 +65,9 @@ COMPETITIONS = {
     "EC": "soccer_uefa_european_championship",
     "CLI": "soccer_conmebol_copa_libertadores",
 }
-
-
 def current_season_year() -> int:
     now = datetime.now(timezone.utc)
     return now.year if now.month >= 7 else now.year - 1
-
-
 AF_LEAGUES = {
     "Greece Super League": {"league_id": 197, "odds_key": "soccer_greece_super_league"},
     "Austria Bundesliga": {"league_id": 218, "odds_key": "soccer_austria_bundesliga"},
@@ -92,7 +79,6 @@ AF_LEAGUES = {
     "UEFA Europa League": {"league_id": 3, "odds_key": "soccer_uefa_europa_league"},
     "UEFA Conference League": {"league_id": 848, "odds_key": "soccer_uefa_europa_conference_league"},
 }
-
 MIN_EDGE = 0.03
 MIN_MODEL_PROB = 0.60
 MAX_GOALS = 6
@@ -102,56 +88,216 @@ REQUEST_PAUSE = 6.5
 MIN_BOOKMAKERS = 2
 MIN_TOTAL_SAMPLE = 3
 STATE_FILE = "state/last_run_date.txt"
-
 FUZZY_MATCH_THRESHOLD = 85
 PICK_RESOLVE_TIMEOUT_DAYS = 14
-
 FD_VOID_STATUSES = frozenset({"POSTPONED", "CANCELLED", "SUSPENDED", "AWARDED"})
 AF_VOID_STATUSES = frozenset({"PST", "CANC", "ABD", "INT", "SUSP", "AWD", "WO"})
-
 HISTORY_FILE = "state/pick_history.json"
+ODDS_API_USAGE_FILE = "state/odds_api_usage.json"
+BANKROLL_FILE = "state/bankroll.json"
+ODDS_API_MONTHLY_LIMIT = 500
+ODDS_API_THROTTLE_PROJECTED = 480
+ODDS_API_WARN_PCT = 80
+DAILY_COMBO_STAKE = 10.0
+STARTING_BANKROLL = 10.0
 MIN_RESOLVED_FOR_CALIBRATION = 15
 CALIBRATION_MIN = 0.80
 CALIBRATION_MAX = 1.20
 CALIBRATION_STEP = 0.02
-
 logger = logging.getLogger(__name__)
-
 # In-run caches (cleared at start of main())
 _team_matches_cache: dict[int, list[dict[str, Any]]] = {}
 _af_team_stats_cache: dict[tuple[int, int, int], dict[str, Any] | None] = {}
 _standings_cache: dict[str, dict[int, float]] = {}
 _af_standings_cache: dict[tuple[int, int], dict[int, float]] = {}
-
-
+_odds_api_calls_this_run: int = 0
+_sport_keys_no_double_chance: set[str] = set()
+_disable_double_chance_this_run: bool = False
+_odds_usage_state: dict[str, Any] | None = None
+# Normalized alias → normalized canonical (the-odds-api / football-data naming gaps)
+TEAM_ALIASES: dict[str, str] = {
+    # Premier League
+    "wolves": "wolverhampton wanderers",
+    "man united": "manchester united",
+    "man utd": "manchester united",
+    "man city": "manchester city",
+    "spurs": "tottenham hotspur",
+    "tottenham": "tottenham hotspur",
+    "newcastle": "newcastle united",
+    "nottm forest": "nottingham forest",
+    "nottingham forest fc": "nottingham forest",
+    "brighton": "brighton and hove albion",
+    "west ham": "west ham united",
+    "leicester": "leicester city",
+    "leeds": "leeds united",
+    "sheffield utd": "sheffield united",
+    "sheffield united fc": "sheffield united",
+    # La Liga
+    "atleti": "atletico madrid",
+    "atletico": "atletico madrid",
+    "betis": "real betis",
+    "real sociedad": "real sociedad",
+    "sociedad": "real sociedad",
+    "athletic": "athletic bilbao",
+    "athletic club": "athletic bilbao",
+    "celta": "celta vigo",
+    "deportivo alaves": "alaves",
+    # Serie A
+    "inter": "inter milan",
+    "internazionale": "inter milan",
+    "milan": "ac milan",
+    "ac milan": "ac milan",
+    "as roma": "roma",
+    "ss lazio": "lazio",
+    "hellas verona": "verona",
+    # Bundesliga
+    "bayern": "bayern munich",
+    "bayern munchen": "bayern munich",
+    "dortmund": "borussia dortmund",
+    "bvb": "borussia dortmund",
+    "leverkusen": "bayer leverkusen",
+    "bayer 04 leverkusen": "bayer leverkusen",
+    "gladbach": "borussia monchengladbach",
+    "monchengladbach": "borussia monchengladbach",
+    "frankfurt": "eintracht frankfurt",
+    "wolfsburg": "vfl wolfsburg",
+    "stuttgart": "vfb stuttgart",
+    # Ligue 1
+    "psg": "paris saint germain",
+    "paris sg": "paris saint germain",
+    "paris saint germain": "paris saint germain",
+    "om": "marseille",
+    "olympique marseille": "marseille",
+    "ol": "lyon",
+    "olympique lyonnais": "lyon",
+    "lille": "lille osc",
+    "monaco": "as monaco",
+    # Portugal / Netherlands / Scotland / Belgium / Turkey / Greece / Austria / Switzerland / Poland
+    "sporting": "sporting cp",
+    "sporting lisbon": "sporting cp",
+    "porto": "fc porto",
+    "benfica": "sl benfica",
+    "ajax": "afc ajax",
+    "psv": "psv eindhoven",
+    "feyenoord": "feyenoord rotterdam",
+    "celtic": "celtic fc",
+    "rangers": "rangers fc",
+    "anderlecht": "rsc anderlecht",
+    "club brugge": "club brugge kv",
+    "galatasaray": "galatasaray sk",
+    "fenerbahce": "fenerbahce sk",
+    "besiktas": "besiktas jk",
+    "olympiacos": "olympiakos piraeus",
+    "panathinaikos": "panathinaikos fc",
+    "paok": "paok thessaloniki",
+    "aek": "aek athens",
+    "salzburg": "fc salzburg",
+    "red bull salzburg": "fc salzburg",
+    "basel": "fc basel",
+    "young boys": "bsc young boys",
+    "legia": "legia warsaw",
+    "legia warszawa": "legia warsaw",
+    # Brazil
+    "flamengo": "cr flamengo",
+    "palmeiras": "se palmeiras",
+}
 def configure_logging() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-
 def clear_run_caches() -> None:
+    global _odds_api_calls_this_run
     _team_matches_cache.clear()
     _af_team_stats_cache.clear()
     _standings_cache.clear()
     _af_standings_cache.clear()
-
-
+    _odds_api_calls_this_run = 0
+    # _sport_keys_no_double_chance / _disable_double_chance_this_run set by init_odds_api_usage()
+def get_odds_api_calls_this_run() -> int:
+    return _odds_api_calls_this_run
+def is_double_chance_disabled_this_run() -> bool:
+    return _disable_double_chance_this_run
+def current_month_key(now: datetime | None = None) -> str:
+    now = now or datetime.now(timezone.utc)
+    return now.strftime("%Y-%m")
+def days_in_month(year: int, month: int) -> int:
+    return calendar.monthrange(year, month)[1]
+def projected_monthly_calls(calls_so_far: int, now: datetime | None = None) -> float:
+    now = now or datetime.now(timezone.utc)
+    elapsed = max(now.day, 1)
+    total_days = days_in_month(now.year, now.month)
+    return (calls_so_far / elapsed) * total_days
+def default_odds_api_usage(now: datetime | None = None) -> dict[str, Any]:
+    return {
+        "month": current_month_key(now),
+        "calls": 0,
+        "sport_keys_no_double_chance": [],
+    }
+def load_odds_api_usage() -> dict[str, Any]:
+    data = load_json_state(ODDS_API_USAGE_FILE, default_odds_api_usage())
+    now = datetime.now(timezone.utc)
+    if data.get("month") != current_month_key(now):
+        return default_odds_api_usage(now)
+    data.setdefault("calls", 0)
+    data.setdefault("sport_keys_no_double_chance", [])
+    return data
+def save_odds_api_usage(data: dict[str, Any]) -> None:
+    save_json_state(ODDS_API_USAGE_FILE, data)
+def init_odds_api_usage() -> dict[str, Any]:
+    global _odds_usage_state, _sport_keys_no_double_chance, _disable_double_chance_this_run
+    _odds_usage_state = load_odds_api_usage()
+    _sport_keys_no_double_chance.update(_odds_usage_state.get("sport_keys_no_double_chance", []))
+    projected = projected_monthly_calls(_odds_usage_state["calls"])
+    _disable_double_chance_this_run = projected > ODDS_API_THROTTLE_PROJECTED
+    if _disable_double_chance_this_run:
+        logger.warning(
+            "Adaptive throttle: projected %.0f calls/month (> %s) — double_chance disabled this run",
+            projected,
+            ODDS_API_THROTTLE_PROJECTED,
+        )
+    return _odds_usage_state
+def record_odds_api_call() -> None:
+    global _odds_usage_state
+    if _odds_usage_state is None:
+        init_odds_api_usage()
+    assert _odds_usage_state is not None
+    _odds_usage_state["calls"] += 1
+    save_odds_api_usage(_odds_usage_state)
+def mark_sport_key_no_double_chance(sport_key: str) -> None:
+    global _odds_usage_state
+    _sport_keys_no_double_chance.add(sport_key)
+    if _odds_usage_state is None:
+        init_odds_api_usage()
+    assert _odds_usage_state is not None
+    keys = _odds_usage_state.setdefault("sport_keys_no_double_chance", [])
+    if sport_key not in keys:
+        keys.append(sport_key)
+    save_odds_api_usage(_odds_usage_state)
+def odds_api_usage_percent() -> float:
+    if _odds_usage_state is None:
+        init_odds_api_usage()
+    assert _odds_usage_state is not None
+    return (_odds_usage_state["calls"] / ODDS_API_MONTHLY_LIMIT) * 100
+def default_bankroll() -> dict[str, float]:
+    return {"balance": STARTING_BANKROLL, "starting_balance": STARTING_BANKROLL}
+def load_bankroll() -> dict[str, float]:
+    data = load_json_state(BANKROLL_FILE, default_bankroll())
+    data.setdefault("balance", STARTING_BANKROLL)
+    data.setdefault("starting_balance", STARTING_BANKROLL)
+    return data
+def save_bankroll(data: dict[str, float]) -> None:
+    save_json_state(BANKROLL_FILE, data)
 # ---------------------------------------------------------------------------
 # football-data.org helpers
 # ---------------------------------------------------------------------------
-
-
 def fd_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     headers = {"X-Auth-Token": FOOTBALL_DATA_API_KEY}
     r = requests.get(f"{FD_BASE}{path}", headers=headers, params=params, timeout=20)
     r.raise_for_status()
     time.sleep(REQUEST_PAUSE)
     return r.json()
-
-
 def get_todays_fixtures(comp_code: str) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     data = fd_get(
@@ -159,8 +305,6 @@ def get_todays_fixtures(comp_code: str) -> list[dict[str, Any]]:
         params={"dateFrom": str(today), "dateTo": str(today), "status": "SCHEDULED"},
     )
     return data.get("matches", [])
-
-
 def get_standings(comp_code: str) -> dict[int, float]:
     if comp_code in _standings_cache:
         return _standings_cache[comp_code]
@@ -170,7 +314,6 @@ def get_standings(comp_code: str) -> dict[int, float]:
         logger.warning("[%s] standings error: %s", comp_code, e)
         _standings_cache[comp_code] = {}
         return {}
-
     ppg: dict[int, float] = {}
     for table_group in data.get("standings", []):
         if table_group.get("type") != "TOTAL":
@@ -181,8 +324,6 @@ def get_standings(comp_code: str) -> dict[int, float]:
                 ppg[row["team"]["id"]] = row["points"] / played
     _standings_cache[comp_code] = ppg
     return ppg
-
-
 def get_team_matches(team_id: int) -> list[dict[str, Any]]:
     if team_id in _team_matches_cache:
         return _team_matches_cache[team_id]
@@ -193,13 +334,10 @@ def get_team_matches(team_id: int) -> list[dict[str, Any]]:
     matches = data.get("matches", [])
     _team_matches_cache[team_id] = matches
     return matches
-
-
 def split_home_away_stats(matches: list[dict[str, Any]], team_id: int) -> dict[str, Any]:
     overall_gf, overall_ga = [], []
     home_gf, home_ga = [], []
     away_gf, away_ga = [], []
-
     for m in matches:
         is_home = m["homeTeam"]["id"] == team_id
         score = m.get("score", {}).get("fullTime", {})
@@ -208,7 +346,6 @@ def split_home_away_stats(matches: list[dict[str, Any]], team_id: int) -> dict[s
             continue
         gf = h if is_home else a
         ga = a if is_home else h
-
         overall_gf.append(gf)
         overall_ga.append(ga)
         if is_home:
@@ -217,10 +354,8 @@ def split_home_away_stats(matches: list[dict[str, Any]], team_id: int) -> dict[s
         else:
             away_gf.append(gf)
             away_ga.append(ga)
-
     def avg(lst: list[float | int]) -> float | None:
         return sum(lst) / len(lst) if lst else None
-
     return {
         "overall_gf": avg(overall_gf),
         "overall_ga": avg(overall_ga),
@@ -231,8 +366,6 @@ def split_home_away_stats(matches: list[dict[str, Any]], team_id: int) -> dict[s
         "away_ga": avg(away_ga),
         "away_n": len(away_gf),
     }
-
-
 def get_h2h(fixture_id: int, limit: int = 5) -> dict[str, Any] | None:
     try:
         data = fd_get(f"/matches/{fixture_id}/head2head", params={"limit": limit})
@@ -240,47 +373,35 @@ def get_h2h(fixture_id: int, limit: int = 5) -> dict[str, Any] | None:
         logger.warning("h2h error for fixture %s: %s", fixture_id, e)
         return None
     return data.get("aggregates")
-
-
 # ---------------------------------------------------------------------------
 # API-Football helpers
 # ---------------------------------------------------------------------------
-
-
 def af_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     headers = {"x-apisports-key": API_FOOTBALL_KEY}
     r = requests.get(f"{AF_BASE}{path}", headers=headers, params=params, timeout=20)
     r.raise_for_status()
     return r.json()
-
-
 def get_af_todays_fixtures(league_id: int, season: int) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     data = af_get("/fixtures", params={"league": league_id, "season": season, "date": str(today)})
     return data.get("response", [])
-
-
 def get_af_team_stats(league_id: int, season: int, team_id: int) -> dict[str, Any] | None:
     cache_key = (league_id, season, team_id)
     if cache_key in _af_team_stats_cache:
         return _af_team_stats_cache[cache_key]
-
     data = af_get("/teams/statistics", params={"league": league_id, "season": season, "team": team_id})
     resp = data.get("response")
     if not resp:
         _af_team_stats_cache[cache_key] = None
         return None
-
     goals_for = resp.get("goals", {}).get("for", {}).get("average", {})
     goals_against = resp.get("goals", {}).get("against", {}).get("average", {})
     played = resp.get("fixtures", {}).get("played", {})
-
     def to_float(v: Any) -> float | None:
         try:
             return float(v)
         except (TypeError, ValueError):
             return None
-
     stats = {
         "overall_gf": to_float(goals_for.get("total")),
         "overall_ga": to_float(goals_against.get("total")),
@@ -293,20 +414,16 @@ def get_af_team_stats(league_id: int, season: int, team_id: int) -> dict[str, An
     }
     _af_team_stats_cache[cache_key] = stats
     return stats
-
-
 def get_af_standings_ppg(league_id: int, season: int) -> dict[int, float]:
     cache_key = (league_id, season)
     if cache_key in _af_standings_cache:
         return _af_standings_cache[cache_key]
-
     try:
         data = af_get("/standings", params={"league": league_id, "season": season})
     except Exception as e:
         logger.warning("[AF %s] standings error: %s", league_id, e)
         _af_standings_cache[cache_key] = {}
         return {}
-
     ppg: dict[int, float] = {}
     try:
         table = data["response"][0]["league"]["standings"][0]
@@ -318,8 +435,6 @@ def get_af_standings_ppg(league_id: int, season: int) -> dict[int, float]:
         pass
     _af_standings_cache[cache_key] = ppg
     return ppg
-
-
 def get_af_h2h(home_af_id: int, away_af_id: int, limit: int = 5) -> dict[str, Any] | None:
     try:
         data = af_get("/fixtures/headtohead", params={"h2h": f"{home_af_id}-{away_af_id}", "last": limit})
@@ -344,17 +459,11 @@ def get_af_h2h(home_af_id: int, away_af_id: int, limit: int = 5) -> dict[str, An
             else:
                 away_wins += 1
     return {"numberOfMatches": len(matches), "homeTeam": {"wins": home_wins}, "awayTeam": {"wins": away_wins}}
-
-
 # ---------------------------------------------------------------------------
 # Poisson model
 # ---------------------------------------------------------------------------
-
-
 def poisson_pmf(k: int, lam: float) -> float:
     return (lam**k) * math.exp(-lam) / math.factorial(k)
-
-
 def blended_rate(
     venue_val: float | None,
     venue_n: int,
@@ -368,8 +477,6 @@ def blended_rate(
     else:
         weight_venue = 0.3 * (venue_n / min_n)
     return weight_venue * venue_val + (1 - weight_venue) * overall_val
-
-
 def expected_goals(
     home_split: dict[str, Any],
     away_split: dict[str, Any],
@@ -382,35 +489,27 @@ def expected_goals(
     h_ga = blended_rate(home_split["home_ga"], home_split["home_n"], home_split["overall_ga"])
     a_gf = blended_rate(away_split["away_gf"], away_split["away_n"], away_split["overall_gf"])
     a_ga = blended_rate(away_split["away_ga"], away_split["away_n"], away_split["overall_ga"])
-
     home_attack = h_gf / league_avg_goals
     home_defense = h_ga / league_avg_goals
     away_attack = a_gf / league_avg_goals
     away_defense = a_ga / league_avg_goals
-
     home_lambda = home_attack * away_defense * league_avg_goals * 1.10
     away_lambda = away_attack * home_defense * league_avg_goals * 0.95
-
     if league_avg_ppg > 0 and home_ppg is not None and away_ppg is not None:
         strength_diff = (home_ppg - away_ppg) / league_avg_ppg
         adj = max(-0.10, min(0.10, strength_diff * 0.08))
         home_lambda *= 1 + adj
         away_lambda *= 1 - adj
-
     return max(min(home_lambda, 4.5), 0.3), max(min(away_lambda, 4.5), 0.3)
-
-
 def match_probabilities(home_lambda: float, away_lambda: float) -> dict[str, float]:
     grid: dict[tuple[int, int], float] = {}
     for h, a in product(range(MAX_GOALS + 1), repeat=2):
         grid[(h, a)] = poisson_pmf(h, home_lambda) * poisson_pmf(a, away_lambda)
-
     p_home = sum(p for (h, a), p in grid.items() if h > a)
     p_draw = sum(p for (h, a), p in grid.items() if h == a)
     p_away = sum(p for (h, a), p in grid.items() if h < a)
     p_over = sum(p for (h, a), p in grid.items() if h + a > 2)
     p_under = 1 - p_over
-
     return {
         "home": p_home,
         "draw": p_draw,
@@ -421,16 +520,32 @@ def match_probabilities(home_lambda: float, away_lambda: float) -> dict[str, flo
         "x2": p_away + p_draw,
         "12": p_home + p_away,
     }
-
-
 # ---------------------------------------------------------------------------
 # the-odds-api.com helpers
 # ---------------------------------------------------------------------------
-
-
+def _odds_get_h2h_totals(sport_key: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+    global _odds_api_calls_this_run
+    _odds_api_calls_this_run += 1
+    record_odds_api_call()
+    r = requests.get(
+        f"{ODDS_BASE}/sports/{sport_key}/odds",
+        params=params,
+        timeout=20,
+    )
+    r.raise_for_status()
+    return r.json()
 def get_odds_for_sport(sport_key: str) -> list[dict[str, Any]]:
+    if _odds_usage_state is None:
+        init_odds_api_usage()
     base_params = {"apiKey": ODDS_API_KEY, "regions": "eu", "oddsFormat": "decimal"}
+    h2h_totals_params = {**base_params, "markets": "h2h,totals"}
+    skip_double_chance = _disable_double_chance_this_run or sport_key in _sport_keys_no_double_chance
+    if skip_double_chance:
+        return _odds_get_h2h_totals(sport_key, h2h_totals_params)
     try:
+        global _odds_api_calls_this_run
+        _odds_api_calls_this_run += 1
+        record_odds_api_call()
         r = requests.get(
             f"{ODDS_BASE}/sports/{sport_key}/odds",
             params={**base_params, "markets": "h2h,totals,double_chance"},
@@ -440,17 +555,10 @@ def get_odds_for_sport(sport_key: str) -> list[dict[str, Any]]:
         return r.json()
     except requests.exceptions.HTTPError as e:
         if e.response is not None and e.response.status_code == 422:
+            mark_sport_key_no_double_chance(sport_key)
             logger.info("double_chance μη διαθέσιμο για %s, fallback σε h2h+totals", sport_key)
-            r = requests.get(
-                f"{ODDS_BASE}/sports/{sport_key}/odds",
-                params={**base_params, "markets": "h2h,totals"},
-                timeout=20,
-            )
-            r.raise_for_status()
-            return r.json()
+            return _odds_get_h2h_totals(sport_key, h2h_totals_params)
         raise
-
-
 def market_summary(event: dict[str, Any]) -> dict[str, Any]:
     prices: dict[str, list[float]] = {
         "home": [],
@@ -493,21 +601,21 @@ def market_summary(event: dict[str, Any]) -> dict[str, Any]:
                         prices["1x"].append(outcome["price"])
                     elif has_away:
                         prices["x2"].append(outcome["price"])
-
     n_bookmakers = len(event.get("bookmakers", []))
     best = {k: (max(v) if v else 0) for k, v in prices.items()}
+    # Η "δίκαιη πιθανότητα αγοράς" υπολογίζεται από τη MEDIAN τιμή (τυπικό
+    # περιθώριο ενός bookmaker, ~4-6%), ΟΧΙ από την καλύτερη τιμή ανάμεσα σε
+    # πολλά bookmakers — αυτό το δεύτερο δημιουργεί τεχνητά μηδενικό
+    # περιθώριο (σχεδόν 0% overround) που κάνει αδύνατο για το μοντέλο να
+    # βρει ποτέ edge.
     median = {k: (statistics.median(v) if v else 0) for k, v in prices.items()}
     return {"best": best, "median": median, "n_bookmakers": n_bookmakers}
-
-
 def implied_probs_no_vig(price_dict: dict[str, float], keys: list[str]) -> dict[str, float]:
     raw = {k: (1 / price_dict[k]) for k in keys if price_dict.get(k)}
     total = sum(raw.values())
     if total == 0:
         return {}
     return {k: v / total for k, v in raw.items()}
-
-
 def implied_probs_double_chance(price_dict: dict[str, float]) -> dict[str, float]:
     keys = ["1x", "x2", "12"]
     raw = {k: (1 / price_dict[k]) for k in keys if price_dict.get(k)}
@@ -517,29 +625,33 @@ def implied_probs_double_chance(price_dict: dict[str, float]) -> dict[str, float
     if total == 0:
         return {}
     return {k: v * (2 / total) for k, v in raw.items()}
-
-
 # ---------------------------------------------------------------------------
 # Team-name matching
 # ---------------------------------------------------------------------------
-
-
 def normalize(name: str) -> str:
     return name.lower().replace("fc", "").replace("cf", "").replace(".", "").replace("-", " ").strip()
-
-
+def canonical_team_name(name: str) -> str:
+    """Map known nicknames/abbreviations to a normalized canonical form."""
+    n = normalize(name)
+    return TEAM_ALIASES.get(n, n)
+def _alias_name_match(a: str, b: str) -> bool:
+    return canonical_team_name(a) == canonical_team_name(b)
 def _substring_name_match(a: str, b: str) -> bool:
     return a in b or b in a
-
-
 def _fuzzy_name_match(a: str, b: str) -> bool:
     if _substring_name_match(a, b):
         return True
     if HAS_RAPIDFUZZ:
         return fuzz.token_sort_ratio(a, b) >= FUZZY_MATCH_THRESHOLD
     return False
-
-
+def _team_names_match(a: str, b: str) -> bool:
+    if _alias_name_match(a, b):
+        return True
+    ca = canonical_team_name(a)
+    cb = canonical_team_name(b)
+    if _substring_name_match(ca, cb):
+        return True
+    return _fuzzy_name_match(ca, cb)
 def find_matching_event(
     fixture: dict[str, Any],
     odds_events: list[dict[str, Any]],
@@ -549,16 +661,12 @@ def find_matching_event(
     for ev in odds_events:
         ev_home = normalize(ev["home_team"])
         ev_away = normalize(ev["away_team"])
-        if _fuzzy_name_match(home_n, ev_home) and _fuzzy_name_match(away_n, ev_away):
+        if _team_names_match(home_n, ev_home) and _team_names_match(away_n, ev_away):
             return ev
     return None
-
-
 # ---------------------------------------------------------------------------
 # Core pipeline
 # ---------------------------------------------------------------------------
-
-
 def _build_candidates(
     home_name: str,
     away_name: str,
@@ -590,8 +698,6 @@ def _build_candidates(
             edge = model_probs[key] - market_dc[key]
             candidates.append((edge, label, key, odds[key], model_probs[key]))
     return candidates
-
-
 def analyze_competition(
     comp_code: str,
     sport_key: str,
@@ -608,28 +714,23 @@ def analyze_competition(
     if not fixtures:
         return
     stats["fixtures_found"] += len(fixtures)
-
     try:
         odds_events = get_odds_for_sport(sport_key)
     except Exception as e:
         logger.warning("[%s] odds error: %s", comp_code, e)
         stats["errors"] += 1
         return
-
     ppg_table = get_standings(comp_code)
     league_avg_ppg = (sum(ppg_table.values()) / len(ppg_table)) if ppg_table else 1.35
-
     for fx in fixtures:
         home_id, away_id = fx["homeTeam"]["id"], fx["awayTeam"]["id"]
         home_name, away_name = fx["homeTeam"]["name"], fx["awayTeam"]["name"]
-
         try:
             home_matches = get_team_matches(home_id)
             away_matches = get_team_matches(away_id)
         except Exception as e:
             logger.warning("[%s] team matches error: %s", comp_code, e)
             continue
-
         home_split = split_home_away_stats(home_matches, home_id)
         away_split = split_home_away_stats(away_matches, away_id)
         if home_split["overall_gf"] is None or away_split["overall_gf"] is None:
@@ -638,35 +739,27 @@ def analyze_competition(
         away_total_n = away_split["home_n"] + away_split["away_n"]
         if home_total_n < MIN_TOTAL_SAMPLE or away_total_n < MIN_TOTAL_SAMPLE:
             continue
-
         event = find_matching_event(fx, odds_events)
         if not event:
             continue
-
         summary = market_summary(event)
         odds = summary["best"]
         fair_odds = summary["median"]
-
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
         model_probs = apply_calibration(model_probs, calibration_factor)
-
         market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
         market_dc = implied_probs_double_chance(fair_odds)
-
         h2h = get_h2h(fx["id"])
         candidates = _build_candidates(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, odds)
         debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
-
         positive_edge = [c for c in candidates if c[0] > 0]
         if not positive_edge:
             continue
-
         edge, label, key, price, model_p = max(positive_edge, key=lambda c: c[0])
-
         data_quality = 0
         if home_split["home_n"] >= MIN_VENUE_SAMPLE:
             data_quality += 1
@@ -674,7 +767,6 @@ def analyze_competition(
             data_quality += 1
         if home_ppg is not None and away_ppg is not None:
             data_quality += 1
-
         h2h_agrees = None
         if h2h and h2h.get("numberOfMatches", 0) >= 2 and key in ("home", "away", "draw"):
             hw = h2h.get("homeTeam", {}).get("wins", 0)
@@ -685,7 +777,6 @@ def analyze_competition(
                 h2h_agrees = aw > hw
             else:
                 h2h_agrees = abs(hw - aw) <= 1
-
         results.append({
             "match": f"{home_name} - {away_name}",
             "competition": comp_code,
@@ -701,8 +792,6 @@ def analyze_competition(
             "source": "fd",
             "market_key": key,
         })
-
-
 def analyze_af_league(
     league_name: str,
     league_id: int,
@@ -714,7 +803,6 @@ def analyze_af_league(
     if not API_FOOTBALL_KEY:
         return
     season = current_season_year()
-
     try:
         fixtures = get_af_todays_fixtures(league_id, season)
     except Exception as e:
@@ -724,23 +812,19 @@ def analyze_af_league(
     if not fixtures:
         return
     stats["fixtures_found"] += len(fixtures)
-
     try:
         odds_events = get_odds_for_sport(odds_sport_key)
     except Exception as e:
         logger.warning("[AF %s] odds error: %s", league_name, e)
         stats["errors"] += 1
         return
-
     ppg_table = get_af_standings_ppg(league_id, season)
     league_avg_ppg = (sum(ppg_table.values()) / len(ppg_table)) if ppg_table else 1.35
-
     for fx in fixtures:
         home_id = fx["teams"]["home"]["id"]
         away_id = fx["teams"]["away"]["id"]
         home_name = fx["teams"]["home"]["name"]
         away_name = fx["teams"]["away"]["name"]
-
         try:
             home_split = get_af_team_stats(league_id, season, home_id)
             away_split = get_af_team_stats(league_id, season, away_id)
@@ -753,38 +837,30 @@ def analyze_af_league(
         away_total_n = away_split["home_n"] + away_split["away_n"]
         if home_total_n < MIN_TOTAL_SAMPLE or away_total_n < MIN_TOTAL_SAMPLE:
             continue
-
         event = find_matching_event(
             {"homeTeam": {"name": home_name}, "awayTeam": {"name": away_name}},
             odds_events,
         )
         if not event:
             continue
-
         summary = market_summary(event)
         odds = summary["best"]
         fair_odds = summary["median"]
-
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
         h_lam, a_lam = expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg)
         model_probs = match_probabilities(h_lam, a_lam)
         model_probs = apply_calibration(model_probs, calibration_factor)
-
         market_1x2 = implied_probs_no_vig(fair_odds, ["home", "draw", "away"])
         market_ou = implied_probs_no_vig(fair_odds, ["over25", "under25"])
         market_dc = implied_probs_double_chance(fair_odds)
-
         h2h = get_af_h2h(home_id, away_id)
         candidates = _build_candidates(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, odds)
         debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
-
         positive_edge = [c for c in candidates if c[0] > 0]
         if not positive_edge:
             continue
-
         edge, label, key, price, model_p = max(positive_edge, key=lambda c: c[0])
-
         data_quality = 0
         if home_split["home_n"] >= MIN_VENUE_SAMPLE:
             data_quality += 1
@@ -792,7 +868,6 @@ def analyze_af_league(
             data_quality += 1
         if home_ppg is not None and away_ppg is not None:
             data_quality += 1
-
         h2h_agrees = None
         if h2h and h2h.get("numberOfMatches", 0) >= 2 and key in ("home", "away", "draw"):
             hw = h2h.get("homeTeam", {}).get("wins", 0)
@@ -803,7 +878,6 @@ def analyze_af_league(
                 h2h_agrees = aw > hw
             else:
                 h2h_agrees = abs(hw - aw) <= 1
-
         results.append({
             "match": f"{home_name} - {away_name}",
             "competition": league_name,
@@ -819,8 +893,6 @@ def analyze_af_league(
             "source": "af",
             "market_key": key,
         })
-
-
 def debug_log_match(
     home_name: str,
     away_name: str,
@@ -848,8 +920,6 @@ def debug_log_match(
         market_ou.get("under25", 0),
         best_edge if best_edge is None else round(best_edge, 4),
     )
-
-
 def send_telegram(text: str) -> None:
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     r = requests.post(
@@ -865,20 +935,15 @@ def send_telegram(text: str) -> None:
     if not r.ok:
         logger.error("Telegram error response: %s %s", r.status_code, r.text)
     r.raise_for_status()
-
-
 def confidence_tier(r: dict[str, Any]) -> str:
     model_prob = r["model_prob"] / 100
     edge = r["edge"] / 100
     signals_ok = (r["data_quality"] >= 2) and r["bookmaker_consensus"] and (r["h2h_agrees"] is not False)
-
     if model_prob >= MIN_MODEL_PROB and edge >= MIN_EDGE and signals_ok:
         return "🟢 ΥΨΗΛΗΣ ΣΙΓΟΥΡΙΑΣ"
     if model_prob >= 0.50 and edge >= 0 and r["data_quality"] >= 1:
         return "🟡 ΜΕΤΡΙΑΣ ΣΙΓΟΥΡΙΑΣ"
     return "🔴 ΧΑΜΗΛΗΣ ΣΙΓΟΥΡΙΑΣ — καλύτερο διαθέσιμο σήμερα, όχι κάτι που θα έπαιζα κανονικά"
-
-
 def select_top_picks(results: list[dict[str, Any]], n: int = 4) -> list[dict[str, Any]]:
     ranked = sorted(
         results,
@@ -886,33 +951,77 @@ def select_top_picks(results: list[dict[str, Any]], n: int = 4) -> list[dict[str
         reverse=True,
     )
     return ranked[:n]
-
-
-def format_message(top: list[dict[str, Any]], stats: dict[str, int]) -> str:
-    today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
+def combo_summary_line(top: list[dict[str, Any]]) -> str:
     if not top:
+        return ""
+    combined_odds = math.prod(r["odds"] for r in top)
+    combined_prob = math.prod(r["model_prob"] / 100 for r in top) * 100
+    return (
+        f"🎲 Αν παίξεις όλα σε combo: συνδυασμένη απόδοση ~{combined_odds:.2f}, "
+        f"πραγματική πιθανότητα να βγουν ΟΛΑ ~{combined_prob:.1f}% "
+        f"(γινόμενο των επιμέρους πιθανοτήτων του μοντέλου)."
+    )
+def bankroll_warning_lines(bankroll: dict[str, float]) -> list[str]:
+    balance = bankroll["balance"]
+    starting = bankroll["starting_balance"]
+    if balance <= 0:
+        return [
+            "⚠️ Το tracked bankroll έχει μηδενιστεί — σκέψου παύση/επανεξέταση στρατηγικής."
+        ]
+    if balance <= starting * 0.5:
+        return [
+            "⚠️ Το tracked bankroll έχει πέσει στο μισό της αρχικής τιμής — "
+            "σκέψου παύση/επανεξέταση στρατηγικής."
+        ]
+    return []
+def format_message(
+    top: list[dict[str, Any]],
+    stats: dict[str, int],
+    *,
+    bankroll: dict[str, float] | None = None,
+    api_usage_pct: float | None = None,
+) -> str:
+    today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
+    bankroll = bankroll or load_bankroll()
+    footer_lines: list[str] = []
+    if api_usage_pct is not None and api_usage_pct >= ODDS_API_WARN_PCT:
+        footer_lines.append(
+            f"⚠️ API usage: {api_usage_pct:.0f}% του μηνιαίου ορίου (the-odds-api)"
+        )
+    footer_lines.extend(bankroll_warning_lines(bankroll))
+    if not top:
+        lines = []
         if stats["errors"] > 0 and stats["fixtures_found"] == 0:
-            return (
+            lines = [
                 f"⚽ <b>Προτάσεις — {today}</b>\n\n"
                 f"⚠️ {stats['errors']} λίγκες απέτυχαν λόγω σφάλματος API (δες logs "
                 "στο GitHub Actions) — δεν μπόρεσα να ελέγξω κανένα ματς σήμερα."
-            )
-        if stats["fixtures_found"] == 0:
-            return (
+            ]
+        elif stats["fixtures_found"] == 0:
+            lines = [
                 f"⚽ <b>Προτάσεις — {today}</b>\n\n"
                 "Δεν παίζει καμία διοργάνωση σήμερα σε καμία από τις λίγκες που "
                 "καλύπτω (φυσιολογικό π.χ. Δευτέρες, ή σε διεθνείς διακοπές) — "
                 "όχι πρόβλημα σύνδεσης. Ξαναδοκίμασε αύριο."
-            )
-        return (
-            f"⚽ <b>Προτάσεις — {today}</b>\n\n"
-            f"Βρέθηκαν {stats['fixtures_found']} ματς σήμερα, αλλά κανένα δεν "
-            "είχε θετικό edge έναντι της αγοράς — δηλαδή η αγορά "
-            "'συμφωνούσε' με το μοντέλο παντού. Στατιστικά φυσιολογικό, όχι "
-            "σφάλμα. Καλύτερα καμία πρόταση παρά κάτι χωρίς πλεονέκτημα."
+            ]
+        else:
+            lines = [
+                f"⚽ <b>Προτάσεις — {today}</b>\n\n"
+                f"Βρέθηκαν {stats['fixtures_found']} ματς σήμερα, αλλά κανένα δεν "
+                "είχε θετικό edge έναντι της αγοράς — δηλαδή η αγορά "
+                "'συμφωνούσε' με το μοντέλο παντού. Στατιστικά φυσιολογικό, όχι "
+                "σφάλμα. Καλύτερα καμία πρόταση παρά κάτι χωρίς πλεονέκτημα."
+            ]
+        lines.extend(footer_lines)
+        lines.append(
+            f"📊 Tracked bankroll (combo-based): {bankroll['balance']:.2f}€ "
+            f"(από {bankroll['starting_balance']:.0f}€ αρχικό)"
         )
-
+        return "\n".join(lines)
     lines = [f"⚽ <b>Προτάσεις — {today}</b>\n"]
+    combo_line = combo_summary_line(top)
+    if combo_line:
+        lines.append(combo_line + "\n")
     for i, r in enumerate(top, 1):
         tier = confidence_tier(r)
         h2h_note = {
@@ -930,7 +1039,6 @@ def format_message(top: list[dict[str, Any]], stats: dict[str, int]) -> str:
             f"({r['model_prob']}% μοντέλο, +{r['edge']}% edge, {h2h_note}, "
             f"{r['n_bookmakers']} bookmakers)\n"
         )
-
     lines.append("🔎 Βρες τα στο stoiximan.cy αναζητώντας τα ματς παραπάνω.\n")
     if len(top) == 1:
         lines.append(
@@ -940,16 +1048,17 @@ def format_message(top: list[dict[str, Any]], stats: dict[str, int]) -> str:
     else:
         lines.append(
             f"⚠️ Αυτά είναι {len(top)} ΑΝΕΞΑΡΤΗΤΑ picks, το καθένα με τη δική "
-            "του σιγουριά — ΔΕΝ είναι προτεινόμενο combo. Αν τα παίξεις όλα "
-            "μαζί σε ένα combo, ο συνδυασμένος κίνδυνος πολλαπλασιάζεται "
-            "(ακόμα κι αν το καθένα ξεχωριστά είναι 🟢, μαζί μπορεί να έχουν "
-            "λιγότερο από 50% να βγουν όλα). Στατιστική εκτίμηση, ΟΧΙ "
-            "εγγύηση — μη ποντάρεις κάτι που δεν αντέχεις να χάσεις."
+            "του σιγουριά — επιλέχθηκαν με βάση value/edge, όχι combo target. "
+            "Αν τα παίξεις όλα μαζί σε ένα combo, ο συνδυασμένος κίνδυνος "
+            "πολλαπλασιάζεται (δες γραμμή combo παραπάνω). Στατιστική "
+            "εκτίμηση, ΟΧΙ εγγύηση — μη ποντάρεις κάτι που δεν αντέχεις να χάσεις."
         )
-
+    lines.extend(footer_lines)
+    lines.append(
+        f"📊 Tracked bankroll (combo-based): {bankroll['balance']:.2f}€ "
+        f"(από {bankroll['starting_balance']:.0f}€ αρχικό)"
+    )
     return "\n".join(lines)
-
-
 def already_ran_today() -> bool:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     if os.path.exists(STATE_FILE):
@@ -957,20 +1066,14 @@ def already_ran_today() -> bool:
             if f.read().strip() == today:
                 return True
     return False
-
-
 def mark_ran_today() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w") as f:
         f.write(today)
-
-
 # ---------------------------------------------------------------------------
 # Self-calibration
 # ---------------------------------------------------------------------------
-
-
 def load_json_state(path: str, default: Any) -> Any:
     if not os.path.exists(path):
         return default
@@ -979,22 +1082,14 @@ def load_json_state(path: str, default: Any) -> Any:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return default
-
-
 def save_json_state(path: str, data: Any) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
-
-
 def load_history() -> dict[str, Any]:
     return load_json_state(HISTORY_FILE, {"picks": [], "calibration_factor": 1.0})
-
-
 def apply_calibration(probs: dict[str, float], factor: float) -> dict[str, float]:
     return {k: max(0.01, min(0.99, 0.5 + (p - 0.5) * factor)) for k, p in probs.items()}
-
-
 def pick_won(market_key: str, home_goals: int, away_goals: int) -> bool | None:
     if market_key == "home":
         return home_goals > away_goals
@@ -1013,8 +1108,6 @@ def pick_won(market_key: str, home_goals: int, away_goals: int) -> bool | None:
     if market_key == "12":
         return home_goals != away_goals
     return None
-
-
 def get_fixture_outcome(source: str, fixture_id: int) -> dict[str, Any]:
     """Επιστρέφει dict με status: finished|void|pending και optional score."""
     try:
@@ -1030,7 +1123,6 @@ def get_fixture_outcome(source: str, fixture_id: int) -> dict[str, Any]:
             if h is None or a is None:
                 return {"status": "pending"}
             return {"status": "finished", "home_goals": h, "away_goals": a}
-
         data = af_get("/fixtures", params={"id": fixture_id})
         resp = data.get("response", [])
         if not resp:
@@ -1049,8 +1141,6 @@ def get_fixture_outcome(source: str, fixture_id: int) -> dict[str, Any]:
     except Exception as e:
         logger.warning("αποτυχία ελέγχου αποτελέσματος fixture %s: %s", fixture_id, e)
         return {"status": "pending"}
-
-
 def resolve_pending_picks(history: dict[str, Any]) -> dict[str, Any]:
     today = datetime.now(timezone.utc).date()
     resolved_count = 0
@@ -1062,15 +1152,12 @@ def resolve_pending_picks(history: dict[str, Any]) -> dict[str, Any]:
         days_old = (today - pick_date).days
         if days_old < 1:
             continue
-
         outcome = get_fixture_outcome(pick["source"], pick["fixture_id"])
-
         if outcome["status"] == "void":
             pick["result"] = "void"
             pick["final_score"] = outcome.get("reason", "void")
             void_count += 1
             continue
-
         if outcome["status"] == "finished":
             home_goals = outcome["home_goals"]
             away_goals = outcome["away_goals"]
@@ -1081,7 +1168,6 @@ def resolve_pending_picks(history: dict[str, Any]) -> dict[str, Any]:
             pick["final_score"] = f"{home_goals}-{away_goals}"
             resolved_count += 1
             continue
-
         if days_old >= PICK_RESOLVE_TIMEOUT_DAYS:
             pick["result"] = "void"
             pick["final_score"] = "timeout"
@@ -1092,18 +1178,50 @@ def resolve_pending_picks(history: dict[str, Any]) -> dict[str, Any]:
                 pick.get("match", pick["fixture_id"]),
                 pick.get("pick"),
             )
-
     if resolved_count:
         logger.info("Επιλύθηκαν %s παλιά picks (νίκη/ήττα καταγράφηκε).", resolved_count)
     if void_count:
         logger.info("Χαρακτηρίστηκαν %s picks ως void (ακυρώθηκαν/timeout).", void_count)
     return history
-
-
+def resolve_daily_combos(history: dict[str, Any], bankroll: dict[str, float]) -> dict[str, float]:
+    """Combo-based bankroll update — per-pick resolve/calibration stays unchanged."""
+    computed = history.setdefault("computed_combos", {})
+    picks_by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for pick in history["picks"]:
+        day_id = pick.get("day_group_id", pick["date"])
+        picks_by_day[day_id].append(pick)
+    for day_id, day_picks in picks_by_day.items():
+        if day_id in computed:
+            continue
+        if any(p.get("result") is None for p in day_picks):
+            continue
+        active = [p for p in day_picks if p.get("result") != "void"]
+        if not active:
+            computed[day_id] = {"result": "all_void", "balance_delta": 0.0}
+            continue
+        if all(p["result"] == "win" for p in active):
+            combined_odds = math.prod(p["odds"] for p in active)
+            delta = DAILY_COMBO_STAKE * (combined_odds - 1)
+            bankroll["balance"] += delta
+            computed[day_id] = {
+                "result": "win",
+                "combined_odds": round(combined_odds, 2),
+                "balance_delta": round(delta, 2),
+            }
+            logger.info(
+                "Combo win %s: odds=%.2f, bankroll +%.2f",
+                day_id,
+                combined_odds,
+                delta,
+            )
+        else:
+            bankroll["balance"] -= DAILY_COMBO_STAKE
+            computed[day_id] = {"result": "loss", "balance_delta": -DAILY_COMBO_STAKE}
+            logger.info("Combo loss %s: bankroll -%.2f", day_id, DAILY_COMBO_STAKE)
+    return bankroll
 def update_calibration(history: dict[str, Any]) -> float:
     resolved = [p for p in history["picks"] if p.get("result") in ("win", "loss")]
     current_factor = history.get("calibration_factor", 1.0)
-
     if len(resolved) < MIN_RESOLVED_FOR_CALIBRATION:
         logger.info(
             "Calibration: μόνο %s resolved picks (χρειάζονται %s+) — καμία αλλαγή.",
@@ -1111,11 +1229,9 @@ def update_calibration(history: dict[str, Any]) -> float:
             MIN_RESOLVED_FOR_CALIBRATION,
         )
         return current_factor
-
     recent = resolved[-100:]
     avg_predicted = sum(p["model_prob_raw"] for p in recent) / len(recent)
     actual_hit_rate = sum(1 for p in recent if p["result"] == "win") / len(recent)
-
     logger.info(
         "Calibration check: %s resolved picks, μέση δηλωμένη πιθανότητα=%.3f, "
         "πραγματικό ποσοστό επιτυχίας=%.3f",
@@ -1123,7 +1239,6 @@ def update_calibration(history: dict[str, Any]) -> float:
         avg_predicted,
         actual_hit_rate,
     )
-
     diff = actual_hit_rate - avg_predicted
     if diff < -0.03:
         new_factor = current_factor - CALIBRATION_STEP
@@ -1131,17 +1246,15 @@ def update_calibration(history: dict[str, Any]) -> float:
         new_factor = current_factor + CALIBRATION_STEP
     else:
         new_factor = current_factor
-
     new_factor = max(CALIBRATION_MIN, min(CALIBRATION_MAX, new_factor))
     if new_factor != current_factor:
         logger.info("Calibration factor: %.3f -> %.3f", current_factor, new_factor)
     return new_factor
-
-
 def record_new_picks(history: dict[str, Any], top_picks: list[dict[str, Any]], today_str: str) -> None:
     for p in top_picks:
         history["picks"].append({
             "date": today_str,
+            "day_group_id": today_str,
             "source": p["source"],
             "fixture_id": p["fixture_id"],
             "market_key": p["market_key"],
@@ -1149,18 +1262,18 @@ def record_new_picks(history: dict[str, Any], top_picks: list[dict[str, Any]], t
             "pick": p["pick"],
             "odds": p["odds"],
             "model_prob_raw": p["model_prob"] / 100,
+            "edge": p["edge"],
+            "data_quality": p["data_quality"],
+            "h2h_agrees": p["h2h_agrees"],
+            "bookmaker_consensus": p["bookmaker_consensus"],
             "result": None,
         })
     history["picks"] = history["picks"][-500:]
-
-
 def main() -> None:
     configure_logging()
     clear_run_caches()
-
     if not HAS_RAPIDFUZZ:
         logger.warning("rapidfuzz not installed — using substring-only team matching")
-
     missing = [
         n
         for n, v in [
@@ -1174,44 +1287,51 @@ def main() -> None:
     if missing:
         logger.error("Λείπουν env vars: %s", missing)
         sys.exit(1)
-
     history = load_history()
     history = resolve_pending_picks(history)
+    bankroll = load_bankroll()
+    bankroll = resolve_daily_combos(history, bankroll)
+    save_bankroll(bankroll)
     calibration_factor = update_calibration(history)
     history["calibration_factor"] = calibration_factor
     save_json_state(HISTORY_FILE, history)
-
     if already_ran_today():
         logger.info("Ήδη στάλθηκε μήνυμα σήμερα — παραλείπεται αυτό το run.")
         return
-
+    init_odds_api_usage()
     if not API_FOOTBALL_KEY:
         logger.warning(
             "API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται "
             "Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία/Βέλγιο."
         )
-
     results: list[dict[str, Any]] = []
     stats = {"fixtures_found": 0, "errors": 0}
     for comp_code, sport_key in COMPETITIONS.items():
         analyze_competition(comp_code, sport_key, results, stats, calibration_factor)
-
     for league_name, cfg in AF_LEAGUES.items():
         analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results, stats, calibration_factor)
-
     logger.info("Σύνολο ματς σήμερα: %s, σφάλματα λιγκών: %s", stats["fixtures_found"], stats["errors"])
+    logger.info("the-odds-api calls this run: %s", get_odds_api_calls_this_run())
+    if _odds_usage_state is not None:
+        logger.info(
+            "the-odds-api month-to-date: %s calls (%.0f%% of limit)",
+            _odds_usage_state["calls"],
+            odds_api_usage_percent(),
+        )
     top = select_top_picks(results, n=4)
-    message = format_message(top, stats)
+    message = format_message(
+        top,
+        stats,
+        bankroll=bankroll,
+        api_usage_pct=odds_api_usage_percent() if _odds_usage_state else None,
+    )
     logger.info(message)
     send_telegram(message)
     mark_ran_today()
-
     if top:
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         history = load_history()
         record_new_picks(history, top, today_str)
         save_json_state(HISTORY_FILE, history)
-
-
 if __name__ == "__main__":
     main()
