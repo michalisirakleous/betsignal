@@ -22,16 +22,28 @@ Value-Bet Telegram Agent
 μπορείς να χάσεις.
 """
 
-import os
-import sys
-import math
-import time
+from __future__ import annotations
+
 import html
 import json
+import logging
+import math
+import os
 import statistics
-import requests
+import sys
+import time
 from datetime import datetime, timezone
 from itertools import product
+from typing import Any
+
+import requests
+
+try:
+    from rapidfuzz import fuzz
+
+    HAS_RAPIDFUZZ = True
+except ImportError:
+    HAS_RAPIDFUZZ = False
 
 # ---------------------------------------------------------------------------
 # Config
@@ -39,7 +51,7 @@ from itertools import product
 
 FOOTBALL_DATA_API_KEY = os.environ.get("FOOTBALL_DATA_API_KEY", "")
 ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
-API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")   # δωρεάν, api-football.com — 100 req/μέρα
+API_FOOTBALL_KEY = os.environ.get("API_FOOTBALL_KEY", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
@@ -47,10 +59,6 @@ FD_BASE = "https://api.football-data.org/v4"
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 AF_BASE = "https://v3.football.api-sports.io"
 
-# football-data.org competition code -> the-odds-api sport key
-# Αυτό είναι η ΜΕΓΙΣΤΗ κάλυψη στο δωρεάν tier του football-data.org (13
-# διοργανώσεις συνολικά). Οι WC/EC είναι τουρνουά — θα έχουν fixtures μόνο
-# στα διαστήματα που παίζονται, τις υπόλοιπες μέρες απλά προσπερνιούνται.
 COMPETITIONS = {
     "PL": "soccer_epl",
     "PD": "soccer_spain_la_liga",
@@ -67,53 +75,84 @@ COMPETITIONS = {
     "CLI": "soccer_conmebol_copa_libertadores",
 }
 
-# Επιπλέον λίγκες μέσω API-Football (δωρεάν, 100 req/μέρα — γι' αυτό ΔΕΝ
-# αντικαθιστά το football-data.org, απλά προσθέτει ό,τι λείπει από εκεί).
-# league_id: επίσημο ID API-Football. season: έτος έναρξης σεζόν (π.χ. η
-# σεζόν 2026-27 είναι season=2026 στο API).
-# ΠΡΟΣΟΧΗ: επιβεβαίωσε τα league_id όταν πάρεις το key σου, καλώντας
-# GET https://v3.football.api-sports.io/leagues?name=<όνομα> — αν κάποιο
-# ID έχει αλλάξει, ενημέρωσέ το εδώ.
-def current_season_year():
+
+def current_season_year() -> int:
     now = datetime.now(timezone.utc)
     return now.year if now.month >= 7 else now.year - 1
 
+
 AF_LEAGUES = {
-    "Greece Super League":       {"league_id": 197, "odds_key": "soccer_greece_super_league"},
-    "Austria Bundesliga":        {"league_id": 218, "odds_key": "soccer_austria_bundesliga"},
-    "Switzerland Super League":  {"league_id": 207, "odds_key": "soccer_switzerland_superleague"},
-    "Poland Ekstraklasa":        {"league_id": 106, "odds_key": "soccer_poland_ekstraklasa"},
-    "Turkey Super Lig":          {"league_id": 203, "odds_key": "soccer_turkey_super_league"},
-    "Scotland Premiership":      {"league_id": 179, "odds_key": "soccer_scotland_premiership"},
-    "Belgium Pro League":        {"league_id": 144, "odds_key": "soccer_belgium_first_div"},
-    "UEFA Europa League":        {"league_id": 3,   "odds_key": "soccer_uefa_europa_league"},
-    "UEFA Conference League":    {"league_id": 848, "odds_key": "soccer_uefa_europa_conference_league"},
+    "Greece Super League": {"league_id": 197, "odds_key": "soccer_greece_super_league"},
+    "Austria Bundesliga": {"league_id": 218, "odds_key": "soccer_austria_bundesliga"},
+    "Switzerland Super League": {"league_id": 207, "odds_key": "soccer_switzerland_superleague"},
+    "Poland Ekstraklasa": {"league_id": 106, "odds_key": "soccer_poland_ekstraklasa"},
+    "Turkey Super Lig": {"league_id": 203, "odds_key": "soccer_turkey_super_league"},
+    "Scotland Premiership": {"league_id": 179, "odds_key": "soccer_scotland_premiership"},
+    "Belgium Pro League": {"league_id": 144, "odds_key": "soccer_belgium_first_div"},
+    "UEFA Europa League": {"league_id": 3, "odds_key": "soccer_uefa_europa_league"},
+    "UEFA Conference League": {"league_id": 848, "odds_key": "soccer_uefa_europa_conference_league"},
 }
 
-MIN_EDGE = 0.03              # edge για "Υψηλής σιγουρίας" tier
-MIN_MODEL_PROB = 0.60        # πιθανότητα μοντέλου για "Υψηλής σιγουρίας" tier
-MAX_GOALS = 6                # όριο goals στο Poisson grid
-RECENT_MATCHES = 10          # πόσα πρόσφατα ματς τραβάμε ανά ομάδα (any venue)
-MIN_VENUE_SAMPLE = 3         # ελάχιστα ματς-στο-ίδιο-venue για να τα εμπιστευτούμε
-REQUEST_PAUSE = 6.5          # football-data.org free tier = 10 req/min
-MIN_BOOKMAKERS = 2           # πόσα bookmakers min για να θεωρηθεί η τιμή αξιόπιστη
-MIN_TOTAL_SAMPLE = 3         # ελάχιστα συνολικά ματς (home_n+away_n) για να εμπιστευτούμε καθόλου τα στατιστικά μιας ομάδας — προστασία από αρχή σεζόν με 1-2 ματς δείγμα
-STATE_FILE = "state/last_run_date.txt"   # για να μη στέλνει διπλό μήνυμα αν τρέξει 2 φορές
+MIN_EDGE = 0.03
+MIN_MODEL_PROB = 0.60
+MAX_GOALS = 6
+RECENT_MATCHES = 10
+MIN_VENUE_SAMPLE = 3
+REQUEST_PAUSE = 6.5
+MIN_BOOKMAKERS = 2
+MIN_TOTAL_SAMPLE = 3
+STATE_FILE = "state/last_run_date.txt"
+
+FUZZY_MATCH_THRESHOLD = 85
+PICK_RESOLVE_TIMEOUT_DAYS = 14
+
+FD_VOID_STATUSES = frozenset({"POSTPONED", "CANCELLED", "SUSPENDED", "AWARDED"})
+AF_VOID_STATUSES = frozenset({"PST", "CANC", "ABD", "INT", "SUSP", "AWD", "WO"})
+
+HISTORY_FILE = "state/pick_history.json"
+MIN_RESOLVED_FOR_CALIBRATION = 15
+CALIBRATION_MIN = 0.80
+CALIBRATION_MAX = 1.20
+CALIBRATION_STEP = 0.02
+
+logger = logging.getLogger(__name__)
+
+# In-run caches (cleared at start of main())
+_team_matches_cache: dict[int, list[dict[str, Any]]] = {}
+_af_team_stats_cache: dict[tuple[int, int, int], dict[str, Any] | None] = {}
+_standings_cache: dict[str, dict[int, float]] = {}
+_af_standings_cache: dict[tuple[int, int], dict[int, float]] = {}
+
+
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+
+def clear_run_caches() -> None:
+    _team_matches_cache.clear()
+    _af_team_stats_cache.clear()
+    _standings_cache.clear()
+    _af_standings_cache.clear()
 
 
 # ---------------------------------------------------------------------------
 # football-data.org helpers
 # ---------------------------------------------------------------------------
 
-def fd_get(path, params=None):
+
+def fd_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     headers = {"X-Auth-Token": FOOTBALL_DATA_API_KEY}
     r = requests.get(f"{FD_BASE}{path}", headers=headers, params=params, timeout=20)
     r.raise_for_status()
-    time.sleep(REQUEST_PAUSE)  # μένουμε μέσα στο free-tier rate limit
+    time.sleep(REQUEST_PAUSE)
     return r.json()
 
 
-def get_todays_fixtures(comp_code):
+def get_todays_fixtures(comp_code: str) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     data = fd_get(
         f"/competitions/{comp_code}/matches",
@@ -122,15 +161,17 @@ def get_todays_fixtures(comp_code):
     return data.get("matches", [])
 
 
-def get_standings(comp_code):
-    """points-per-game ανά team_id, από τον τρέχοντα πίνακα βαθμολογίας."""
+def get_standings(comp_code: str) -> dict[int, float]:
+    if comp_code in _standings_cache:
+        return _standings_cache[comp_code]
     try:
         data = fd_get(f"/competitions/{comp_code}/standings")
     except Exception as e:
-        print(f"[{comp_code}] standings error: {e}")
+        logger.warning("[%s] standings error: %s", comp_code, e)
+        _standings_cache[comp_code] = {}
         return {}
 
-    ppg = {}
+    ppg: dict[int, float] = {}
     for table_group in data.get("standings", []):
         if table_group.get("type") != "TOTAL":
             continue
@@ -138,18 +179,23 @@ def get_standings(comp_code):
             played = row.get("playedGames") or 0
             if played > 0:
                 ppg[row["team"]["id"]] = row["points"] / played
+    _standings_cache[comp_code] = ppg
     return ppg
 
 
-def get_team_matches(team_id):
-    """Τελευταία N ΤΕΛΕΙΩΜΕΝΑ ματς μιας ομάδας, οποιαδήποτε διοργάνωση."""
-    data = fd_get(f"/teams/{team_id}/matches", params={"status": "FINISHED", "limit": RECENT_MATCHES})
-    return data.get("matches", [])
+def get_team_matches(team_id: int) -> list[dict[str, Any]]:
+    if team_id in _team_matches_cache:
+        return _team_matches_cache[team_id]
+    data = fd_get(
+        f"/teams/{team_id}/matches",
+        params={"status": "FINISHED", "limit": RECENT_MATCHES},
+    )
+    matches = data.get("matches", [])
+    _team_matches_cache[team_id] = matches
+    return matches
 
 
-def split_home_away_stats(matches, team_id):
-    """Από τη λίστα ματς μιας ομάδας, βγάζει overall / home-only / away-only
-    goals-for / goals-against averages."""
+def split_home_away_stats(matches: list[dict[str, Any]], team_id: int) -> dict[str, Any]:
     overall_gf, overall_ga = [], []
     home_gf, home_ga = [], []
     away_gf, away_ga = [], []
@@ -172,78 +218,96 @@ def split_home_away_stats(matches, team_id):
             away_gf.append(gf)
             away_ga.append(ga)
 
-    def avg(lst):
+    def avg(lst: list[float | int]) -> float | None:
         return sum(lst) / len(lst) if lst else None
 
     return {
-        "overall_gf": avg(overall_gf), "overall_ga": avg(overall_ga),
-        "home_gf": avg(home_gf), "home_ga": avg(home_ga), "home_n": len(home_gf),
-        "away_gf": avg(away_gf), "away_ga": avg(away_ga), "away_n": len(away_gf),
+        "overall_gf": avg(overall_gf),
+        "overall_ga": avg(overall_ga),
+        "home_gf": avg(home_gf),
+        "home_ga": avg(home_ga),
+        "home_n": len(home_gf),
+        "away_gf": avg(away_gf),
+        "away_ga": avg(away_ga),
+        "away_n": len(away_gf),
     }
 
 
-def get_h2h(fixture_id, limit=5):
-    """Ιστορικές αναμετρήσεις μεταξύ των δύο ομάδων αυτού του fixture."""
+def get_h2h(fixture_id: int, limit: int = 5) -> dict[str, Any] | None:
     try:
         data = fd_get(f"/matches/{fixture_id}/head2head", params={"limit": limit})
     except Exception as e:
-        print(f"h2h error for fixture {fixture_id}: {e}")
+        logger.warning("h2h error for fixture %s: %s", fixture_id, e)
         return None
     return data.get("aggregates")
 
 
 # ---------------------------------------------------------------------------
-# API-Football helpers (επιπλέον λίγκες: Ελλάδα, Αυστρία, Ελβετία, Πολωνία,
-# Τουρκία, Σκωτία — δωρεάν αλλά με όριο 100 requests/μέρα, γι' αυτό
-# χρησιμοποιείται μόνο ΣΥΜΠΛΗΡΩΜΑΤΙΚΑ, όχι σαν κύρια πηγή).
+# API-Football helpers
 # ---------------------------------------------------------------------------
 
-def af_get(path, params=None):
+
+def af_get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     headers = {"x-apisports-key": API_FOOTBALL_KEY}
     r = requests.get(f"{AF_BASE}{path}", headers=headers, params=params, timeout=20)
     r.raise_for_status()
     return r.json()
 
 
-def get_af_todays_fixtures(league_id, season):
+def get_af_todays_fixtures(league_id: int, season: int) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     data = af_get("/fixtures", params={"league": league_id, "season": season, "date": str(today)})
     return data.get("response", [])
 
 
-def get_af_team_stats(league_id, season, team_id):
-    """API-Football δίνει ΚΑΤΕΥΘΕΙΑΝ season averages home/away — δε
-    χρειάζεται να μαζέψουμε ματς ένα-ένα όπως στο football-data.org."""
+def get_af_team_stats(league_id: int, season: int, team_id: int) -> dict[str, Any] | None:
+    cache_key = (league_id, season, team_id)
+    if cache_key in _af_team_stats_cache:
+        return _af_team_stats_cache[cache_key]
+
     data = af_get("/teams/statistics", params={"league": league_id, "season": season, "team": team_id})
     resp = data.get("response")
     if not resp:
+        _af_team_stats_cache[cache_key] = None
         return None
+
     goals_for = resp.get("goals", {}).get("for", {}).get("average", {})
     goals_against = resp.get("goals", {}).get("against", {}).get("average", {})
     played = resp.get("fixtures", {}).get("played", {})
 
-    def to_float(v):
+    def to_float(v: Any) -> float | None:
         try:
             return float(v)
         except (TypeError, ValueError):
             return None
 
-    return {
-        "overall_gf": to_float(goals_for.get("total")), "overall_ga": to_float(goals_against.get("total")),
-        "home_gf": to_float(goals_for.get("home")), "home_ga": to_float(goals_against.get("home")),
+    stats = {
+        "overall_gf": to_float(goals_for.get("total")),
+        "overall_ga": to_float(goals_against.get("total")),
+        "home_gf": to_float(goals_for.get("home")),
+        "home_ga": to_float(goals_against.get("home")),
         "home_n": played.get("home", 0) or 0,
-        "away_gf": to_float(goals_for.get("away")), "away_ga": to_float(goals_against.get("away")),
+        "away_gf": to_float(goals_for.get("away")),
+        "away_ga": to_float(goals_against.get("away")),
         "away_n": played.get("away", 0) or 0,
     }
+    _af_team_stats_cache[cache_key] = stats
+    return stats
 
 
-def get_af_standings_ppg(league_id, season):
+def get_af_standings_ppg(league_id: int, season: int) -> dict[int, float]:
+    cache_key = (league_id, season)
+    if cache_key in _af_standings_cache:
+        return _af_standings_cache[cache_key]
+
     try:
         data = af_get("/standings", params={"league": league_id, "season": season})
     except Exception as e:
-        print(f"[AF {league_id}] standings error: {e}")
+        logger.warning("[AF %s] standings error: %s", league_id, e)
+        _af_standings_cache[cache_key] = {}
         return {}
-    ppg = {}
+
+    ppg: dict[int, float] = {}
     try:
         table = data["response"][0]["league"]["standings"][0]
         for row in table:
@@ -252,14 +316,15 @@ def get_af_standings_ppg(league_id, season):
                 ppg[row["team"]["id"]] = row["points"] / played
     except (IndexError, KeyError, TypeError):
         pass
+    _af_standings_cache[cache_key] = ppg
     return ppg
 
 
-def get_af_h2h(home_af_id, away_af_id, limit=5):
+def get_af_h2h(home_af_id: int, away_af_id: int, limit: int = 5) -> dict[str, Any] | None:
     try:
         data = af_get("/fixtures/headtohead", params={"h2h": f"{home_af_id}-{away_af_id}", "last": limit})
     except Exception as e:
-        print(f"AF h2h error: {e}")
+        logger.warning("AF h2h error: %s", e)
         return None
     matches = data.get("response", [])
     if not matches:
@@ -285,13 +350,17 @@ def get_af_h2h(home_af_id, away_af_id, limit=5):
 # Poisson model
 # ---------------------------------------------------------------------------
 
-def poisson_pmf(k, lam):
-    return (lam ** k) * math.exp(-lam) / math.factorial(k)
+
+def poisson_pmf(k: int, lam: float) -> float:
+    return (lam**k) * math.exp(-lam) / math.factorial(k)
 
 
-def blended_rate(venue_val, venue_n, overall_val, min_n=MIN_VENUE_SAMPLE):
-    """Αν έχουμε αρκετά venue-specific δεδομένα, τα εμπιστευόμαστε περισσότερο.
-    Αλλιώς κάνουμε blend προς το overall."""
+def blended_rate(
+    venue_val: float | None,
+    venue_n: int,
+    overall_val: float | None,
+    min_n: int = MIN_VENUE_SAMPLE,
+) -> float | None:
     if venue_val is None:
         return overall_val
     if venue_n >= min_n:
@@ -301,8 +370,14 @@ def blended_rate(venue_val, venue_n, overall_val, min_n=MIN_VENUE_SAMPLE):
     return weight_venue * venue_val + (1 - weight_venue) * overall_val
 
 
-def expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg, league_avg_goals=1.35):
-    """Συνδυάζει venue-specific form + standings strength."""
+def expected_goals(
+    home_split: dict[str, Any],
+    away_split: dict[str, Any],
+    home_ppg: float | None,
+    away_ppg: float | None,
+    league_avg_ppg: float,
+    league_avg_goals: float = 1.35,
+) -> tuple[float, float]:
     h_gf = blended_rate(home_split["home_gf"], home_split["home_n"], home_split["overall_gf"])
     h_ga = blended_rate(home_split["home_ga"], home_split["home_n"], home_split["overall_ga"])
     a_gf = blended_rate(away_split["away_gf"], away_split["away_n"], away_split["overall_gf"])
@@ -313,21 +388,20 @@ def expected_goals(home_split, away_split, home_ppg, away_ppg, league_avg_ppg, l
     away_attack = a_gf / league_avg_goals
     away_defense = a_ga / league_avg_goals
 
-    home_lambda = home_attack * away_defense * league_avg_goals * 1.10  # home advantage
+    home_lambda = home_attack * away_defense * league_avg_goals * 1.10
     away_lambda = away_attack * home_defense * league_avg_goals * 0.95
 
-    # Standings adjustment: sanity-check πάνω στο goals-based μοντέλο (±10% max)
     if league_avg_ppg > 0 and home_ppg is not None and away_ppg is not None:
         strength_diff = (home_ppg - away_ppg) / league_avg_ppg
         adj = max(-0.10, min(0.10, strength_diff * 0.08))
-        home_lambda *= (1 + adj)
-        away_lambda *= (1 - adj)
+        home_lambda *= 1 + adj
+        away_lambda *= 1 - adj
 
     return max(min(home_lambda, 4.5), 0.3), max(min(away_lambda, 4.5), 0.3)
 
 
-def match_probabilities(home_lambda, away_lambda):
-    grid = {}
+def match_probabilities(home_lambda: float, away_lambda: float) -> dict[str, float]:
+    grid: dict[tuple[int, int], float] = {}
     for h, a in product(range(MAX_GOALS + 1), repeat=2):
         grid[(h, a)] = poisson_pmf(h, home_lambda) * poisson_pmf(a, away_lambda)
 
@@ -338,14 +412,14 @@ def match_probabilities(home_lambda, away_lambda):
     p_under = 1 - p_over
 
     return {
-        "home": p_home, "draw": p_draw, "away": p_away,
-        "over25": p_over, "under25": p_under,
-        # Double Chance — πιο "ασφαλή" markets (καλύπτουν 2 από τα 3 πιθανά
-        # αποτελέσματα), καλή προσθήκη όταν κανένα καθαρό 1X2 pick δεν έχει
-        # αρκετά υψηλή πιθανότητα από μόνο του.
-        "1x": p_home + p_draw,      # γηπεδούχος ή ισοπαλία
-        "x2": p_away + p_draw,      # φιλοξενούμενη ή ισοπαλία
-        "12": p_home + p_away,      # οποιοσδήποτε εκτός ισοπαλίας
+        "home": p_home,
+        "draw": p_draw,
+        "away": p_away,
+        "over25": p_over,
+        "under25": p_under,
+        "1x": p_home + p_draw,
+        "x2": p_away + p_draw,
+        "12": p_home + p_away,
     }
 
 
@@ -353,11 +427,8 @@ def match_probabilities(home_lambda, away_lambda):
 # the-odds-api.com helpers
 # ---------------------------------------------------------------------------
 
-def get_odds_for_sport(sport_key):
-    """Ζητάει h2h+totals+double_chance μαζί. Αν το double_chance δεν
-    υποστηρίζεται για αυτό το sport_key, το the-odds-api επιστρέφει 422
-    για ΟΛΟΚΛΗΡΟ το request (όχι μόνο το unsupported market) — οπότε κάνουμε
-    fallback στα βασικά markets αντί να χάνουμε τα πάντα για μια λίγκα."""
+
+def get_odds_for_sport(sport_key: str) -> list[dict[str, Any]]:
     base_params = {"apiKey": ODDS_API_KEY, "regions": "eu", "oddsFormat": "decimal"}
     try:
         r = requests.get(
@@ -369,7 +440,7 @@ def get_odds_for_sport(sport_key):
         return r.json()
     except requests.exceptions.HTTPError as e:
         if e.response is not None and e.response.status_code == 422:
-            print(f"  (double_chance μη διαθέσιμο για {sport_key}, fallback σε h2h+totals)")
+            logger.info("double_chance μη διαθέσιμο για %s, fallback σε h2h+totals", sport_key)
             r = requests.get(
                 f"{ODDS_BASE}/sports/{sport_key}/odds",
                 params={**base_params, "markets": "h2h,totals"},
@@ -380,10 +451,17 @@ def get_odds_for_sport(sport_key):
         raise
 
 
-def market_summary(event):
-    """Μαζεύει τιμές απ' ΟΛΑ τα bookmakers, ώστε να μπορούμε να δούμε πόσα
-    συμφωνούν (consensus) και όχι μόνο 1 outlier τιμή."""
-    prices = {"home": [], "draw": [], "away": [], "over25": [], "under25": [], "1x": [], "x2": [], "12": []}
+def market_summary(event: dict[str, Any]) -> dict[str, Any]:
+    prices: dict[str, list[float]] = {
+        "home": [],
+        "draw": [],
+        "away": [],
+        "over25": [],
+        "under25": [],
+        "1x": [],
+        "x2": [],
+        "12": [],
+    }
     home_team = event["home_team"]
     away_team = event["away_team"]
     for bookmaker in event.get("bookmakers", []):
@@ -405,9 +483,6 @@ def market_summary(event):
                     elif outcome["name"] == "Under":
                         prices["under25"].append(outcome["price"])
             elif market["key"] == "double_chance":
-                # Τα ονόματα διαφέρουν ανά bookmaker (π.χ. "Team A/Draw",
-                # "Team A or Draw") — matching με βάση ποια ονόματα ομάδων
-                # εμφανίζονται μέσα στο outcome name, όχι exact string.
                 for outcome in market["outcomes"]:
                     name = outcome["name"]
                     has_home = home_team in name
@@ -421,18 +496,11 @@ def market_summary(event):
 
     n_bookmakers = len(event.get("bookmakers", []))
     best = {k: (max(v) if v else 0) for k, v in prices.items()}
-    # Η "δίκαιη πιθανότητα αγοράς" υπολογίζεται από τη MEDIAN τιμή (τυπικό
-    # περιθώριο ενός bookmaker, ~4-6%), ΟΧΙ από την καλύτερη τιμή ανάμεσα σε
-    # πολλά bookmakers — αυτό το δεύτερο δημιουργεί τεχνητά μηδενικό
-    # περιθώριο (σχεδόν 0% overround) που κάνει αδύνατο για το μοντέλο να
-    # βρει ποτέ edge. Η "best" τιμή παραμένει αυτή που θα έπαιρνες στην
-    # πράξη αν παίξεις — απλά δε χρησιμοποιείται για τον υπολογισμό της
-    # "δίκαιης" πιθανότητας.
     median = {k: (statistics.median(v) if v else 0) for k, v in prices.items()}
     return {"best": best, "median": median, "n_bookmakers": n_bookmakers}
 
 
-def implied_probs_no_vig(price_dict, keys):
+def implied_probs_no_vig(price_dict: dict[str, float], keys: list[str]) -> dict[str, float]:
     raw = {k: (1 / price_dict[k]) for k in keys if price_dict.get(k)}
     total = sum(raw.values())
     if total == 0:
@@ -440,11 +508,7 @@ def implied_probs_no_vig(price_dict, keys):
     return {k: v / total for k, v in raw.items()}
 
 
-def implied_probs_double_chance(price_dict):
-    """Το double chance ΔΕΝ είναι mutually exclusive partition (πάντα 2 από
-    τα 3 'κερδίζουν'), άρα δεν αφαιρούμε vig όπως στο 1X2. Σε δίκαιη αγορά
-    το άθροισμα των 3 πιθανοτήτων θα έκανε ακριβώς 2 (αφού πάντα κερδίζουν
-    2 στα 3) — κανονικοποιούμε προς αυτό αντί για προς το 1."""
+def implied_probs_double_chance(price_dict: dict[str, float]) -> dict[str, float]:
     keys = ["1x", "x2", "12"]
     raw = {k: (1 / price_dict[k]) for k in keys if price_dict.get(k)}
     if len(raw) < 2:
@@ -459,17 +523,33 @@ def implied_probs_double_chance(price_dict):
 # Team-name matching
 # ---------------------------------------------------------------------------
 
-def normalize(name):
+
+def normalize(name: str) -> str:
     return name.lower().replace("fc", "").replace("cf", "").replace(".", "").replace("-", " ").strip()
 
 
-def find_matching_event(fixture, odds_events):
+def _substring_name_match(a: str, b: str) -> bool:
+    return a in b or b in a
+
+
+def _fuzzy_name_match(a: str, b: str) -> bool:
+    if _substring_name_match(a, b):
+        return True
+    if HAS_RAPIDFUZZ:
+        return fuzz.token_sort_ratio(a, b) >= FUZZY_MATCH_THRESHOLD
+    return False
+
+
+def find_matching_event(
+    fixture: dict[str, Any],
+    odds_events: list[dict[str, Any]],
+) -> dict[str, Any] | None:
     home_n = normalize(fixture["homeTeam"]["name"])
     away_n = normalize(fixture["awayTeam"]["name"])
     for ev in odds_events:
         ev_home = normalize(ev["home_team"])
         ev_away = normalize(ev["away_team"])
-        if (home_n in ev_home or ev_home in home_n) and (away_n in ev_away or ev_away in away_n):
+        if _fuzzy_name_match(home_n, ev_home) and _fuzzy_name_match(away_n, ev_away):
             return ev
     return None
 
@@ -478,11 +558,51 @@ def find_matching_event(fixture, odds_events):
 # Core pipeline
 # ---------------------------------------------------------------------------
 
-def analyze_competition(comp_code, sport_key, results, stats, calibration_factor=1.0):
+
+def _build_candidates(
+    home_name: str,
+    away_name: str,
+    model_probs: dict[str, float],
+    market_1x2: dict[str, float],
+    market_ou: dict[str, float],
+    market_dc: dict[str, float],
+    odds: dict[str, float],
+) -> list[tuple[float, str, str, float, float]]:
+    candidates: list[tuple[float, str, str, float, float]] = []
+    for key, label in [
+        ("home", f"{home_name} νίκη"),
+        ("draw", "Ισοπαλία"),
+        ("away", f"{away_name} νίκη"),
+    ]:
+        if key in market_1x2 and odds.get(key):
+            edge = model_probs[key] - market_1x2[key]
+            candidates.append((edge, label, key, odds[key], model_probs[key]))
+    for key, label in [("over25", "Over 2.5 goals"), ("under25", "Under 2.5 goals")]:
+        if key in market_ou and odds.get(key):
+            edge = model_probs[key] - market_ou[key]
+            candidates.append((edge, label, key, odds[key], model_probs[key]))
+    for key, label in [
+        ("1x", f"{home_name} ή Ισοπαλία (Double Chance)"),
+        ("x2", f"{away_name} ή Ισοπαλία (Double Chance)"),
+        ("12", f"{home_name} ή {away_name}, χωρίς ισοπαλία (Double Chance)"),
+    ]:
+        if key in market_dc and odds.get(key):
+            edge = model_probs[key] - market_dc[key]
+            candidates.append((edge, label, key, odds[key], model_probs[key]))
+    return candidates
+
+
+def analyze_competition(
+    comp_code: str,
+    sport_key: str,
+    results: list[dict[str, Any]],
+    stats: dict[str, int],
+    calibration_factor: float = 1.0,
+) -> None:
     try:
         fixtures = get_todays_fixtures(comp_code)
     except Exception as e:
-        print(f"[{comp_code}] fixtures error: {e}")
+        logger.warning("[%s] fixtures error: %s", comp_code, e)
         stats["errors"] += 1
         return
     if not fixtures:
@@ -492,7 +612,7 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
     try:
         odds_events = get_odds_for_sport(sport_key)
     except Exception as e:
-        print(f"[{comp_code}] odds error: {e}")
+        logger.warning("[%s] odds error: %s", comp_code, e)
         stats["errors"] += 1
         return
 
@@ -507,7 +627,7 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
             home_matches = get_team_matches(home_id)
             away_matches = get_team_matches(away_id)
         except Exception as e:
-            print(f"[{comp_code}] team matches error: {e}")
+            logger.warning("[%s] team matches error: %s", comp_code, e)
             continue
 
         home_split = split_home_away_stats(home_matches, home_id)
@@ -524,8 +644,8 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
             continue
 
         summary = market_summary(event)
-        odds = summary["best"]        # τιμή που θα έπαιρνες στην πράξη
-        fair_odds = summary["median"]  # για δίκαιη εκτίμηση πιθανότητας αγοράς
+        odds = summary["best"]
+        fair_odds = summary["median"]
 
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
@@ -538,25 +658,7 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
         market_dc = implied_probs_double_chance(fair_odds)
 
         h2h = get_h2h(fx["id"])
-
-        candidates = []
-        for key, label in [("home", f"{home_name} νίκη"), ("draw", "Ισοπαλία"), ("away", f"{away_name} νίκη")]:
-            if key in market_1x2 and odds.get(key):
-                edge = model_probs[key] - market_1x2[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-        for key, label in [("over25", "Over 2.5 goals"), ("under25", "Under 2.5 goals")]:
-            if key in market_ou and odds.get(key):
-                edge = model_probs[key] - market_ou[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-        for key, label in [
-            ("1x", f"{home_name} ή Ισοπαλία (Double Chance)"),
-            ("x2", f"{away_name} ή Ισοπαλία (Double Chance)"),
-            ("12", f"{home_name} ή {away_name}, χωρίς ισοπαλία (Double Chance)"),
-        ]:
-            if key in market_dc and odds.get(key):
-                edge = model_probs[key] - market_dc[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-
+        candidates = _build_candidates(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, odds)
         debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
 
         positive_edge = [c for c in candidates if c[0] > 0]
@@ -565,7 +667,6 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
 
         edge, label, key, price, model_p = max(positive_edge, key=lambda c: c[0])
 
-        # --- Ποιότητα δεδομένων / συμφωνία σημάτων, για το confidence score ---
         data_quality = 0
         if home_split["home_n"] >= MIN_VENUE_SAMPLE:
             data_quality += 1
@@ -585,8 +686,6 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
             else:
                 h2h_agrees = abs(hw - aw) <= 1
 
-        bookmaker_consensus = summary["n_bookmakers"] >= MIN_BOOKMAKERS
-
         results.append({
             "match": f"{home_name} - {away_name}",
             "competition": comp_code,
@@ -596,7 +695,7 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
             "edge": round(edge * 100, 1),
             "data_quality": data_quality,
             "h2h_agrees": h2h_agrees,
-            "bookmaker_consensus": bookmaker_consensus,
+            "bookmaker_consensus": summary["n_bookmakers"] >= MIN_BOOKMAKERS,
             "n_bookmakers": summary["n_bookmakers"],
             "fixture_id": fx["id"],
             "source": "fd",
@@ -604,9 +703,14 @@ def analyze_competition(comp_code, sport_key, results, stats, calibration_factor
         })
 
 
-def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, calibration_factor=1.0):
-    """Ίδια λογική ανάλυσης με analyze_competition, αλλά πάνω σε
-    API-Football δεδομένα (season stats αντί για ματς-ένα-ένα)."""
+def analyze_af_league(
+    league_name: str,
+    league_id: int,
+    odds_sport_key: str,
+    results: list[dict[str, Any]],
+    stats: dict[str, int],
+    calibration_factor: float = 1.0,
+) -> None:
     if not API_FOOTBALL_KEY:
         return
     season = current_season_year()
@@ -614,7 +718,7 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, ca
     try:
         fixtures = get_af_todays_fixtures(league_id, season)
     except Exception as e:
-        print(f"[AF {league_name}] fixtures error: {e}")
+        logger.warning("[AF %s] fixtures error: %s", league_name, e)
         stats["errors"] += 1
         return
     if not fixtures:
@@ -624,7 +728,7 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, ca
     try:
         odds_events = get_odds_for_sport(odds_sport_key)
     except Exception as e:
-        print(f"[AF {league_name}] odds error: {e}")
+        logger.warning("[AF %s] odds error: %s", league_name, e)
         stats["errors"] += 1
         return
 
@@ -641,30 +745,25 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, ca
             home_split = get_af_team_stats(league_id, season, home_id)
             away_split = get_af_team_stats(league_id, season, away_id)
         except Exception as e:
-            print(f"[AF {league_name}] team stats error: {e}")
+            logger.warning("[AF %s] team stats error: %s", league_name, e)
             continue
         if not home_split or not away_split or home_split["overall_gf"] is None or away_split["overall_gf"] is None:
             continue
-        # ΚΡΙΣΙΜΟ: εδώ τα στατιστικά είναι ΜΟΝΟ της τρέχουσας σεζόν (season
-        # stats), όχι "τελευταία 10 ματς οποιασδήποτε διοργάνωσης" όπως στο
-        # football-data.org pipeline. Στην αρχή της σεζόν (1-2 ματς παιγμένα)
-        # αυτό δίνει εξωφρενικά/ασταθή νούμερα (π.χ. ομάδα με ένα 5-0 βγάζει
-        # "μέσο όρο" 5 γκολ/ματς) — προτιμούμε να προσπεράσουμε το ματς παρά
-        # να στείλουμε ψευδές "value" pick.
         home_total_n = home_split["home_n"] + home_split["away_n"]
         away_total_n = away_split["home_n"] + away_split["away_n"]
         if home_total_n < MIN_TOTAL_SAMPLE or away_total_n < MIN_TOTAL_SAMPLE:
             continue
 
         event = find_matching_event(
-            {"homeTeam": {"name": home_name}, "awayTeam": {"name": away_name}}, odds_events
+            {"homeTeam": {"name": home_name}, "awayTeam": {"name": away_name}},
+            odds_events,
         )
         if not event:
             continue
 
         summary = market_summary(event)
-        odds = summary["best"]        # τιμή που θα έπαιρνες στην πράξη
-        fair_odds = summary["median"]  # για δίκαιη εκτίμηση πιθανότητας αγοράς
+        odds = summary["best"]
+        fair_odds = summary["median"]
 
         home_ppg = ppg_table.get(home_id)
         away_ppg = ppg_table.get(away_id)
@@ -677,25 +776,7 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, ca
         market_dc = implied_probs_double_chance(fair_odds)
 
         h2h = get_af_h2h(home_id, away_id)
-
-        candidates = []
-        for key, label in [("home", f"{home_name} νίκη"), ("draw", "Ισοπαλία"), ("away", f"{away_name} νίκη")]:
-            if key in market_1x2 and odds.get(key):
-                edge = model_probs[key] - market_1x2[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-        for key, label in [("over25", "Over 2.5 goals"), ("under25", "Under 2.5 goals")]:
-            if key in market_ou and odds.get(key):
-                edge = model_probs[key] - market_ou[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-        for key, label in [
-            ("1x", f"{home_name} ή Ισοπαλία (Double Chance)"),
-            ("x2", f"{away_name} ή Ισοπαλία (Double Chance)"),
-            ("12", f"{home_name} ή {away_name}, χωρίς ισοπαλία (Double Chance)"),
-        ]:
-            if key in market_dc and odds.get(key):
-                edge = model_probs[key] - market_dc[key]
-                candidates.append((edge, label, key, odds[key], model_probs[key]))
-
+        candidates = _build_candidates(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, odds)
         debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates)
 
         positive_edge = [c for c in candidates if c[0] > 0]
@@ -740,33 +821,53 @@ def analyze_af_league(league_name, league_id, odds_sport_key, results, stats, ca
         })
 
 
-def debug_log_match(home_name, away_name, model_probs, market_1x2, market_ou, market_dc, candidates):
-    """Τυπώνει μοντέλο vs αγορά για κάθε ματς στα GitHub Actions logs, ώστε
-    να μπορούμε να διαγνώσουμε γιατί δε βρίσκεται edge, χωρίς να μαντεύουμε."""
+def debug_log_match(
+    home_name: str,
+    away_name: str,
+    model_probs: dict[str, float],
+    market_1x2: dict[str, float],
+    market_ou: dict[str, float],
+    market_dc: dict[str, float],
+    candidates: list[tuple[float, str, str, float, float]],
+) -> None:
     best_edge = max((c[0] for c in candidates), default=None)
-    print(
-        f"  [{home_name} - {away_name}] "
-        f"model(H/D/A)={model_probs['home']:.3f}/{model_probs['draw']:.3f}/{model_probs['away']:.3f} "
-        f"market(H/D/A)={market_1x2.get('home', 0):.3f}/{market_1x2.get('draw', 0):.3f}/{market_1x2.get('away', 0):.3f} "
-        f"model(O/U 2.5)={model_probs['over25']:.3f}/{model_probs['under25']:.3f} "
-        f"market(O/U 2.5)={market_ou.get('over25', 0):.3f}/{market_ou.get('under25', 0):.3f} "
-        f"best_edge={best_edge if best_edge is None else round(best_edge, 4)}"
+    logger.info(
+        "  [%s - %s] model(H/D/A)=%.3f/%.3f/%.3f market(H/D/A)=%.3f/%.3f/%.3f "
+        "model(O/U 2.5)=%.3f/%.3f market(O/U 2.5)=%.3f/%.3f best_edge=%s",
+        home_name,
+        away_name,
+        model_probs["home"],
+        model_probs["draw"],
+        model_probs["away"],
+        market_1x2.get("home", 0),
+        market_1x2.get("draw", 0),
+        market_1x2.get("away", 0),
+        model_probs["over25"],
+        model_probs["under25"],
+        market_ou.get("over25", 0),
+        market_ou.get("under25", 0),
+        best_edge if best_edge is None else round(best_edge, 4),
     )
 
 
-def send_telegram(text):
+def send_telegram(text: str) -> None:
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    r = requests.post(url, data={
-        "chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True,
-    }, timeout=20)
+    r = requests.post(
+        url,
+        data={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        },
+        timeout=20,
+    )
     if not r.ok:
-        print(f"Telegram error response: {r.status_code} {r.text}")
+        logger.error("Telegram error response: %s %s", r.status_code, r.text)
     r.raise_for_status()
 
 
-def confidence_tier(r):
-    """Δεν κοιτάει ΜΟΝΟ πιθανότητα/edge — κοιτάει και πόσο 'πλήρης' ήταν
-    η ανάλυση πίσω από το pick."""
+def confidence_tier(r: dict[str, Any]) -> str:
     model_prob = r["model_prob"] / 100
     edge = r["edge"] / 100
     signals_ok = (r["data_quality"] >= 2) and r["bookmaker_consensus"] and (r["h2h_agrees"] is not False)
@@ -778,10 +879,7 @@ def confidence_tier(r):
     return "🔴 ΧΑΜΗΛΗΣ ΣΙΓΟΥΡΙΑΣ — καλύτερο διαθέσιμο σήμερα, όχι κάτι που θα έπαιζα κανονικά"
 
 
-def select_top_picks(results, n=4):
-    """Ταξινόμηση: πρώτα όσα είναι πιο 'σίγουρα' (μοντέλο + edge + data
-    quality). Το καθένα αξιολογείται στα δικά του μέτρα (δεν επιλέγονται
-    για να 'χωράνε' σε κάποιο συνδυασμένο στόχο)."""
+def select_top_picks(results: list[dict[str, Any]], n: int = 4) -> list[dict[str, Any]]:
     ranked = sorted(
         results,
         key=lambda r: (r["model_prob"] / 100, r["edge"] / 100, r["data_quality"]),
@@ -790,7 +888,7 @@ def select_top_picks(results, n=4):
     return ranked[:n]
 
 
-def format_message(top, stats):
+def format_message(top: list[dict[str, Any]], stats: dict[str, int]) -> str:
     today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
     if not top:
         if stats["errors"] > 0 and stats["fixtures_found"] == 0:
@@ -852,7 +950,7 @@ def format_message(top, stats):
     return "\n".join(lines)
 
 
-def already_ran_today():
+def already_ran_today() -> bool:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
@@ -861,7 +959,7 @@ def already_ran_today():
     return False
 
 
-def mark_ran_today():
+def mark_ran_today() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w") as f:
@@ -869,23 +967,11 @@ def mark_ran_today():
 
 
 # ---------------------------------------------------------------------------
-# Self-calibration: καταγραφή picks -> έλεγχος πραγματικών αποτελεσμάτων ->
-# μικρή, φραγμένη διόρθωση του μοντέλου αν είναι συστηματικά υπερβολικά
-# σίγουρο (ή όχι αρκετά). ΔΕΝ αλλάζει τη λογική επιλογής pick (πάντα το
-# καλύτερο διαθέσιμο, με βάση θετικό edge) — αλλάζει μόνο πόσο "μετριάζει"
-# τις πιθανότητες του μοντέλου πριν υπολογιστεί το edge. Αν δεν υπάρχουν
-# αρκετά resolved picks ή δεν εντοπίζεται συστηματικό πρόβλημα, ο
-# συντελεστής μένει 1.0 (καμία αλλαγή) — καμία υποχρέωση να "βρει κάτι".
+# Self-calibration
 # ---------------------------------------------------------------------------
 
-HISTORY_FILE = "state/pick_history.json"
-MIN_RESOLVED_FOR_CALIBRATION = 15   # ελάχιστα resolved picks πριν εμπιστευτούμε καθόλου calibration
-CALIBRATION_MIN = 0.80               # όρια ασφαλείας — ποτέ πάνω από ±20% διόρθωση
-CALIBRATION_MAX = 1.20
-CALIBRATION_STEP = 0.02              # πόσο αλλάζει ο συντελεστής ανά run (αργή, σταθερή προσαρμογή)
 
-
-def load_json_state(path, default):
+def load_json_state(path: str, default: Any) -> Any:
     if not os.path.exists(path):
         return default
     try:
@@ -895,23 +981,21 @@ def load_json_state(path, default):
         return default
 
 
-def save_json_state(path, data):
+def save_json_state(path: str, data: Any) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
 
 
-def load_history():
+def load_history() -> dict[str, Any]:
     return load_json_state(HISTORY_FILE, {"picks": [], "calibration_factor": 1.0})
 
 
-def apply_calibration(probs, factor):
-    """Συρρικνώνει (factor<1) ή διαστέλλει (factor>1) τις πιθανότητες γύρω
-    από το 0.5. factor=1.0 σημαίνει καμία αλλαγή."""
+def apply_calibration(probs: dict[str, float], factor: float) -> dict[str, float]:
     return {k: max(0.01, min(0.99, 0.5 + (p - 0.5) * factor)) for k, p in probs.items()}
 
 
-def pick_won(market_key, home_goals, away_goals):
+def pick_won(market_key: str, home_goals: int, away_goals: int) -> bool | None:
     if market_key == "home":
         return home_goals > away_goals
     if market_key == "draw":
@@ -931,93 +1015,130 @@ def pick_won(market_key, home_goals, away_goals):
     return None
 
 
-def get_final_score(source, fixture_id):
-    """Επιστρέφει (home_goals, away_goals) αν το ματς έχει τελειώσει, αλλιώς
-    None (ή αν αποτύχει το API call — ξαναδοκιμάζουμε στο επόμενο run)."""
+def get_fixture_outcome(source: str, fixture_id: int) -> dict[str, Any]:
+    """Επιστρέφει dict με status: finished|void|pending και optional score."""
     try:
         if source == "fd":
             data = fd_get(f"/matches/{fixture_id}")
-            if data.get("status") != "FINISHED":
-                return None
+            status = data.get("status", "")
+            if status in FD_VOID_STATUSES:
+                return {"status": "void", "reason": status}
+            if status != "FINISHED":
+                return {"status": "pending"}
             score = data.get("score", {}).get("fullTime", {})
             h, a = score.get("home"), score.get("away")
-            return (h, a) if h is not None and a is not None else None
-        else:  # "af"
-            data = af_get("/fixtures", params={"id": fixture_id})
-            resp = data.get("response", [])
-            if not resp:
-                return None
-            fx = resp[0]
-            if fx.get("fixture", {}).get("status", {}).get("short") != "FT":
-                return None
-            goals = fx.get("goals", {})
-            h, a = goals.get("home"), goals.get("away")
-            return (h, a) if h is not None and a is not None else None
+            if h is None or a is None:
+                return {"status": "pending"}
+            return {"status": "finished", "home_goals": h, "away_goals": a}
+
+        data = af_get("/fixtures", params={"id": fixture_id})
+        resp = data.get("response", [])
+        if not resp:
+            return {"status": "pending"}
+        fx = resp[0]
+        short_status = fx.get("fixture", {}).get("status", {}).get("short", "")
+        if short_status in AF_VOID_STATUSES:
+            return {"status": "void", "reason": short_status}
+        if short_status != "FT":
+            return {"status": "pending"}
+        goals = fx.get("goals", {})
+        h, a = goals.get("home"), goals.get("away")
+        if h is None or a is None:
+            return {"status": "pending"}
+        return {"status": "finished", "home_goals": h, "away_goals": a}
     except Exception as e:
-        print(f"  (αποτυχία ελέγχου αποτελέσματος fixture {fixture_id}: {e})")
-        return None
+        logger.warning("αποτυχία ελέγχου αποτελέσματος fixture %s: %s", fixture_id, e)
+        return {"status": "pending"}
 
 
-def resolve_pending_picks(history):
-    """Ελέγχει τα picks που στάλθηκαν πριν 1+ μέρες και δεν έχουν ακόμα
-    καταγεγραμμένο αποτέλεσμα — αν το ματς έχει τελειώσει, καταγράφει
-    νίκη/ήττα. Ματς που δεν έχουν τελειώσει ακόμα (π.χ. αναβλήθηκαν)
-    ξαναδοκιμάζονται στο επόμενο run, χωρίς πρόβλημα."""
+def resolve_pending_picks(history: dict[str, Any]) -> dict[str, Any]:
     today = datetime.now(timezone.utc).date()
     resolved_count = 0
+    void_count = 0
     for pick in history["picks"]:
         if pick.get("result") is not None:
             continue
         pick_date = datetime.strptime(pick["date"], "%Y-%m-%d").date()
-        if (today - pick_date).days < 1:
-            continue  # πολύ πρόσφατο, το ματς μπορεί να μην έχει παιχτεί ακόμα
-        score = get_final_score(pick["source"], pick["fixture_id"])
-        if score is None:
+        days_old = (today - pick_date).days
+        if days_old < 1:
             continue
-        home_goals, away_goals = score
-        won = pick_won(pick["market_key"], home_goals, away_goals)
-        if won is None:
+
+        outcome = get_fixture_outcome(pick["source"], pick["fixture_id"])
+
+        if outcome["status"] == "void":
+            pick["result"] = "void"
+            pick["final_score"] = outcome.get("reason", "void")
+            void_count += 1
             continue
-        pick["result"] = "win" if won else "loss"
-        pick["final_score"] = f"{home_goals}-{away_goals}"
-        resolved_count += 1
+
+        if outcome["status"] == "finished":
+            home_goals = outcome["home_goals"]
+            away_goals = outcome["away_goals"]
+            won = pick_won(pick["market_key"], home_goals, away_goals)
+            if won is None:
+                continue
+            pick["result"] = "win" if won else "loss"
+            pick["final_score"] = f"{home_goals}-{away_goals}"
+            resolved_count += 1
+            continue
+
+        if days_old >= PICK_RESOLVE_TIMEOUT_DAYS:
+            pick["result"] = "void"
+            pick["final_score"] = "timeout"
+            void_count += 1
+            logger.info(
+                "Pick timeout (%s days): %s — %s",
+                days_old,
+                pick.get("match", pick["fixture_id"]),
+                pick.get("pick"),
+            )
+
     if resolved_count:
-        print(f"Επιλύθηκαν {resolved_count} παλιά picks (νίκη/ήττα καταγράφηκε).")
+        logger.info("Επιλύθηκαν %s παλιά picks (νίκη/ήττα καταγράφηκε).", resolved_count)
+    if void_count:
+        logger.info("Χαρακτηρίστηκαν %s picks ως void (ακυρώθηκαν/timeout).", void_count)
     return history
 
 
-def update_calibration(history):
-    """Συγκρίνει το στατιστικό μοντέλο (πιθανότητα που δήλωσε) με το
-    πραγματικό ποσοστό επιτυχίας στα resolved picks. Μικρό, φραγμένο βήμα
-    διόρθωσης ανά run — ποτέ απότομη αλλαγή."""
-    resolved = [p for p in history["picks"] if p.get("result") is not None]
+def update_calibration(history: dict[str, Any]) -> float:
+    resolved = [p for p in history["picks"] if p.get("result") in ("win", "loss")]
     current_factor = history.get("calibration_factor", 1.0)
 
     if len(resolved) < MIN_RESOLVED_FOR_CALIBRATION:
-        print(f"Calibration: μόνο {len(resolved)} resolved picks (χρειάζονται {MIN_RESOLVED_FOR_CALIBRATION}+) — καμία αλλαγή.")
+        logger.info(
+            "Calibration: μόνο %s resolved picks (χρειάζονται %s+) — καμία αλλαγή.",
+            len(resolved),
+            MIN_RESOLVED_FOR_CALIBRATION,
+        )
         return current_factor
 
-    recent = resolved[-100:]  # τα πιο πρόσφατα 100, ώστε να προσαρμόζεται με τον καιρό
+    recent = resolved[-100:]
     avg_predicted = sum(p["model_prob_raw"] for p in recent) / len(recent)
     actual_hit_rate = sum(1 for p in recent if p["result"] == "win") / len(recent)
 
-    print(f"Calibration check: {len(recent)} resolved picks, μέση δηλωμένη πιθανότητα={avg_predicted:.3f}, πραγματικό ποσοστό επιτυχίας={actual_hit_rate:.3f}")
+    logger.info(
+        "Calibration check: %s resolved picks, μέση δηλωμένη πιθανότητα=%.3f, "
+        "πραγματικό ποσοστό επιτυχίας=%.3f",
+        len(recent),
+        avg_predicted,
+        actual_hit_rate,
+    )
 
     diff = actual_hit_rate - avg_predicted
-    if diff < -0.03:      # το μοντέλο είναι υπερβολικά σίγουρο -> συρρίκνωση
+    if diff < -0.03:
         new_factor = current_factor - CALIBRATION_STEP
-    elif diff > 0.03:     # το μοντέλο είναι υπερβολικά συντηρητικό -> διαστολή
+    elif diff > 0.03:
         new_factor = current_factor + CALIBRATION_STEP
     else:
-        new_factor = current_factor  # καλή βαθμονόμηση ήδη, καμία αλλαγή
+        new_factor = current_factor
 
     new_factor = max(CALIBRATION_MIN, min(CALIBRATION_MAX, new_factor))
     if new_factor != current_factor:
-        print(f"Calibration factor: {current_factor:.3f} -> {new_factor:.3f}")
+        logger.info("Calibration factor: %.3f -> %.3f", current_factor, new_factor)
     return new_factor
 
 
-def record_new_picks(history, top_picks, today_str):
+def record_new_picks(history: dict[str, Any], top_picks: list[dict[str, Any]], today_str: str) -> None:
     for p in top_picks:
         history["picks"].append({
             "date": today_str,
@@ -1030,41 +1151,47 @@ def record_new_picks(history, top_picks, today_str):
             "model_prob_raw": p["model_prob"] / 100,
             "result": None,
         })
-    # Κρατάμε μόνο τα τελευταία 500 picks ώστε το αρχείο να μη μεγαλώνει απεριόριστα
     history["picks"] = history["picks"][-500:]
 
 
-def main():
-    missing = [n for n, v in [
-        ("FOOTBALL_DATA_API_KEY", FOOTBALL_DATA_API_KEY),
-        ("ODDS_API_KEY", ODDS_API_KEY),
-        ("TELEGRAM_BOT_TOKEN", TELEGRAM_BOT_TOKEN),
-        ("TELEGRAM_CHAT_ID", TELEGRAM_CHAT_ID),
-    ] if not v]
+def main() -> None:
+    configure_logging()
+    clear_run_caches()
+
+    if not HAS_RAPIDFUZZ:
+        logger.warning("rapidfuzz not installed — using substring-only team matching")
+
+    missing = [
+        n
+        for n, v in [
+            ("FOOTBALL_DATA_API_KEY", FOOTBALL_DATA_API_KEY),
+            ("ODDS_API_KEY", ODDS_API_KEY),
+            ("TELEGRAM_BOT_TOKEN", TELEGRAM_BOT_TOKEN),
+            ("TELEGRAM_CHAT_ID", TELEGRAM_CHAT_ID),
+        ]
+        if not v
+    ]
     if missing:
-        print(f"Λείπουν env vars: {missing}")
+        logger.error("Λείπουν env vars: %s", missing)
         sys.exit(1)
 
-    # --- Self-calibration: πρώτα λύνουμε παλιά picks, ΑΝΕΞΑΡΤΗΤΑ από το αν
-    # θα στείλουμε μήνυμα σήμερα (τρέχει σε κάθε attempt, όχι μόνο στο πρώτο
-    # επιτυχημένο) ώστε η μάθηση να συνεχίζεται κάθε μέρα.
     history = load_history()
     history = resolve_pending_picks(history)
     calibration_factor = update_calibration(history)
     history["calibration_factor"] = calibration_factor
     save_json_state(HISTORY_FILE, history)
 
-    # Τρέχουμε 3 φορές/μέρα (ασφάλεια αν κάποιο cron καθυστερήσει/χαθεί από
-    # το GitHub) — αλλά στέλνουμε μήνυμα ΜΟΝΟ την πρώτη φορά που πετυχαίνει
-    # κάθε μέρα, ώστε να μην παίρνεις 2-3 ίδια μηνύματα.
     if already_ran_today():
-        print("Ήδη στάλθηκε μήνυμα σήμερα — παραλείπεται αυτό το run.")
+        logger.info("Ήδη στάλθηκε μήνυμα σήμερα — παραλείπεται αυτό το run.")
         return
 
     if not API_FOOTBALL_KEY:
-        print("API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία/Βέλγιο.")
+        logger.warning(
+            "API_FOOTBALL_KEY δεν έχει οριστεί — παραλείπονται "
+            "Ελλάδα/Αυστρία/Ελβετία/Πολωνία/Τουρκία/Σκωτία/Βέλγιο."
+        )
 
-    results = []
+    results: list[dict[str, Any]] = []
     stats = {"fixtures_found": 0, "errors": 0}
     for comp_code, sport_key in COMPETITIONS.items():
         analyze_competition(comp_code, sport_key, results, stats, calibration_factor)
@@ -1072,16 +1199,16 @@ def main():
     for league_name, cfg in AF_LEAGUES.items():
         analyze_af_league(league_name, cfg["league_id"], cfg["odds_key"], results, stats, calibration_factor)
 
-    print(f"Σύνολο ματς σήμερα: {stats['fixtures_found']}, σφάλματα λιγκών: {stats['errors']}")
+    logger.info("Σύνολο ματς σήμερα: %s, σφάλματα λιγκών: %s", stats["fixtures_found"], stats["errors"])
     top = select_top_picks(results, n=4)
     message = format_message(top, stats)
-    print(message)
+    logger.info(message)
     send_telegram(message)
     mark_ran_today()
 
     if top:
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        history = load_history()  # ξαναφόρτωμα σε περίπτωση αλλαγών
+        history = load_history()
         record_new_picks(history, top, today_str)
         save_json_state(HISTORY_FILE, history)
 
