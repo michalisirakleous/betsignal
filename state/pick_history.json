@@ -69,6 +69,18 @@
       "pick": "CS Independiente Rivadavia \u03bd\u03af\u03ba\u03b7",
       "odds": 2.58,
       "model_prob_raw": 0.6990000000000001,
+      "result": "loss",
+      "final_score": "5-6"
+    },
+    {
+      "date": "2026-08-19",
+      "source": "fd",
+      "fixture_id": 564467,
+      "market_key": "home",
+      "match": "CD Coquimbo Unido - CA Platense",
+      "pick": "CD Coquimbo Unido \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.4,
+      "model_prob_raw": 0.532,
       "result": null
     }
   ],
