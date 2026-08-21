@@ -1,8 +1,10 @@
 {
   "month": "2026-08",
-  "calls": 6,
+  "calls": 11,
   "sport_keys_no_double_chance": [
     "soccer_spain_la_liga",
-    "soccer_conmebol_copa_libertadores"
+    "soccer_conmebol_copa_libertadores",
+    "soccer_epl",
+    "soccer_france_ligue_one"
   ]
 }

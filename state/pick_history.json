@@ -156,7 +156,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-0"
     }
   ],
   "calibration_factor": 1.0,
@@ -174,6 +175,10 @@
       "balance_delta": -10.0
     },
     "2026-08-19": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-08-20": {
       "result": "loss",
       "balance_delta": -10.0
     }
