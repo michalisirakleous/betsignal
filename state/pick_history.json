@@ -158,6 +158,38 @@
       "bookmaker_consensus": true,
       "result": "loss",
       "final_score": "0-0"
+    },
+    {
+      "date": "2026-08-22",
+      "day_group_id": "2026-08-22",
+      "source": "fd",
+      "fixture_id": 554975,
+      "market_key": "over25",
+      "match": "Fluminense FC - Clube do Remo",
+      "pick": "Over 2.5 goals",
+      "odds": 1.81,
+      "model_prob_raw": 0.5660000000000001,
+      "edge": 2.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-22",
+      "day_group_id": "2026-08-22",
+      "source": "fd",
+      "fixture_id": 554974,
+      "market_key": "away",
+      "match": "Cruzeiro EC - CR Flamengo",
+      "pick": "CR Flamengo \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.36,
+      "model_prob_raw": 0.491,
+      "edge": 7.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
     }
   ],
   "calibration_factor": 1.0,
