@@ -173,7 +173,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-08-22",
@@ -186,6 +187,71 @@
       "odds": 2.36,
       "model_prob_raw": 0.491,
       "edge": 7.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-1"
+    },
+    {
+      "date": "2026-08-23",
+      "day_group_id": "2026-08-23",
+      "source": "fd",
+      "fixture_id": 554977,
+      "market_key": "home",
+      "match": "SE Palmeiras - CR Vasco da Gama",
+      "pick": "SE Palmeiras \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.64,
+      "model_prob_raw": 0.807,
+      "edge": 21.2,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-23",
+      "day_group_id": "2026-08-23",
+      "source": "fd",
+      "fixture_id": 554972,
+      "market_key": "over25",
+      "match": "Chapecoense AF - S\u00e3o Paulo FC",
+      "pick": "Over 2.5 goals",
+      "odds": 2.2,
+      "model_prob_raw": 0.742,
+      "edge": 28.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-23",
+      "day_group_id": "2026-08-23",
+      "source": "fd",
+      "fixture_id": 554978,
+      "market_key": "under25",
+      "match": "Santos FC - Mirassol FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.0,
+      "model_prob_raw": 0.644,
+      "edge": 14.6,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-08-23",
+      "day_group_id": "2026-08-23",
+      "source": "fd",
+      "fixture_id": 554973,
+      "market_key": "away",
+      "match": "Coritiba FBC - SC Corinthians Paulista",
+      "pick": "SC Corinthians Paulista \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.7,
+      "model_prob_raw": 0.639,
+      "edge": 26.6,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -211,6 +277,10 @@
       "balance_delta": -10.0
     },
     "2026-08-20": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-08-22": {
       "result": "loss",
       "balance_delta": -10.0
     }
