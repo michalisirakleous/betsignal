@@ -262,7 +262,7 @@
       "final_score": "2-1"
     }
   ],
-  "calibration_factor": 0.96,
+  "calibration_factor": 0.94,
   "computed_combos": {
     "2026-08-16": {
       "result": "loss",
