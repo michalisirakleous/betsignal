@@ -207,7 +207,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "4-1"
     },
     {
       "date": "2026-08-23",
@@ -223,7 +224,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-0"
     },
     {
       "date": "2026-08-23",
@@ -239,7 +241,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-1"
     },
     {
       "date": "2026-08-23",
@@ -255,10 +258,11 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-1"
     }
   ],
-  "calibration_factor": 1.0,
+  "calibration_factor": 0.98,
   "computed_combos": {
     "2026-08-16": {
       "result": "loss",
@@ -281,6 +285,10 @@
       "balance_delta": -10.0
     },
     "2026-08-22": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-08-23": {
       "result": "loss",
       "balance_delta": -10.0
     }
