@@ -275,7 +275,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "5-2"
     },
     {
       "date": "2026-08-29",
@@ -291,7 +292,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-08-29",
@@ -307,7 +309,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-08-29",
@@ -323,7 +326,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-3"
     },
     {
       "date": "2026-08-30",
@@ -355,7 +359,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-2"
     },
     {
       "date": "2026-08-30",
@@ -371,7 +376,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-0"
     },
     {
       "date": "2026-08-30",
@@ -384,6 +390,23 @@
       "odds": 4.7,
       "model_prob_raw": 0.312,
       "edge": 9.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "0-1"
+    },
+    {
+      "date": "2026-08-31",
+      "day_group_id": "2026-08-31",
+      "source": "fd",
+      "fixture_id": 554987,
+      "market_key": "away",
+      "match": "Clube do Remo - Coritiba FBC",
+      "pick": "Coritiba FBC \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.95,
+      "model_prob_raw": 0.326,
+      "edge": 6.1,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -417,6 +440,10 @@
       "balance_delta": -10.0
     },
     "2026-08-23": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-08-29": {
       "result": "loss",
       "balance_delta": -10.0
     }
