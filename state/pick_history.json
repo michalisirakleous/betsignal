@@ -343,7 +343,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-08-30",
@@ -410,6 +411,71 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-3"
+    },
+    {
+      "date": "2026-09-01",
+      "day_group_id": "2026-09-01",
+      "source": "fd",
+      "fixture_id": 561801,
+      "market_key": "under25",
+      "match": "Sheffield United FC - Bolton Wanderers FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.14,
+      "model_prob_raw": 0.882,
+      "edge": 41.4,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-01",
+      "day_group_id": "2026-09-01",
+      "source": "fd",
+      "fixture_id": 561797,
+      "market_key": "over25",
+      "match": "Stoke City FC - Norwich City FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.81,
+      "model_prob_raw": 0.7509999999999999,
+      "edge": 21.8,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-01",
+      "day_group_id": "2026-09-01",
+      "source": "fd",
+      "fixture_id": 561804,
+      "market_key": "under25",
+      "match": "Swansea City AFC - Watford FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.0,
+      "model_prob_raw": 0.733,
+      "edge": 23.8,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-01",
+      "day_group_id": "2026-09-01",
+      "source": "fd",
+      "fixture_id": 561802,
+      "market_key": "over25",
+      "match": "Portsmouth FC - Derby County FC",
+      "pick": "Over 2.5 goals",
+      "odds": 2.06,
+      "model_prob_raw": 0.732,
+      "edge": 25.7,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
       "result": null
     }
   ],
@@ -446,6 +512,15 @@
     "2026-08-29": {
       "result": "loss",
       "balance_delta": -10.0
+    },
+    "2026-08-30": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-08-31": {
+      "result": "win",
+      "combined_odds": 3.95,
+      "balance_delta": 29.5
     }
   }
 }
