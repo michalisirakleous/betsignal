@@ -428,7 +428,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-2"
     },
     {
       "date": "2026-09-01",
@@ -444,7 +445,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-0"
     },
     {
       "date": "2026-09-01",
@@ -460,7 +462,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-0"
     },
     {
       "date": "2026-09-01",
@@ -475,6 +478,71 @@
       "edge": 25.7,
       "data_quality": 1,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "0-2"
+    },
+    {
+      "date": "2026-09-02",
+      "day_group_id": "2026-09-02",
+      "source": "fd",
+      "fixture_id": 561807,
+      "market_key": "home",
+      "match": "Queens Park Rangers FC - Cardiff City FC",
+      "pick": "Queens Park Rangers FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.96,
+      "model_prob_raw": 0.682,
+      "edge": 19.0,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "day_group_id": "2026-09-02",
+      "source": "fd",
+      "fixture_id": 554775,
+      "market_key": "over25",
+      "match": "CR Flamengo - Mirassol FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.52,
+      "model_prob_raw": 0.669,
+      "edge": 5.5,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "day_group_id": "2026-09-02",
+      "source": "fd",
+      "fixture_id": 561805,
+      "market_key": "away",
+      "match": "Burnley FC - Middlesbrough FC",
+      "pick": "Middlesbrough FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.55,
+      "model_prob_raw": 0.66,
+      "edge": 26.9,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-02",
+      "day_group_id": "2026-09-02",
+      "source": "fd",
+      "fixture_id": 561806,
+      "market_key": "home",
+      "match": "Millwall FC - Wrexham AFC",
+      "pick": "Millwall FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.3,
+      "model_prob_raw": 0.644,
+      "edge": 22.0,
+      "data_quality": 1,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -521,6 +589,10 @@
       "result": "win",
       "combined_odds": 3.95,
       "balance_delta": 29.5
+    },
+    "2026-09-01": {
+      "result": "loss",
+      "balance_delta": -10.0
     }
   }
 }
