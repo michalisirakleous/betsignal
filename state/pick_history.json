@@ -549,6 +549,38 @@
       "bookmaker_consensus": true,
       "result": "loss",
       "final_score": "0-3"
+    },
+    {
+      "date": "2026-09-04",
+      "day_group_id": "2026-09-04",
+      "source": "fd",
+      "fixture_id": 558250,
+      "market_key": "home",
+      "match": "Sparta Rotterdam - PEC Zwolle",
+      "pick": "Sparta Rotterdam \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.97,
+      "model_prob_raw": 0.605,
+      "edge": 11.1,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-04",
+      "day_group_id": "2026-09-04",
+      "source": "fd",
+      "fixture_id": 567299,
+      "market_key": "away",
+      "match": "FC Porto - Moreirense FC",
+      "pick": "Moreirense FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 27.0,
+      "model_prob_raw": 0.107,
+      "edge": 5.8,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
     }
   ],
   "calibration_factor": 0.8,
