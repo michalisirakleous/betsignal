@@ -564,7 +564,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-2"
     },
     {
       "date": "2026-09-04",
@@ -696,6 +697,10 @@
       "balance_delta": -10.0
     },
     "2026-09-02": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-04": {
       "result": "loss",
       "balance_delta": -10.0
     }
