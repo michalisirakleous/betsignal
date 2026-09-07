@@ -666,7 +666,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "5-2"
     },
     {
       "date": "2026-09-06",
@@ -682,7 +683,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-3"
     },
     {
       "date": "2026-09-06",
@@ -698,7 +700,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-2"
     },
     {
       "date": "2026-09-06",
@@ -713,6 +716,39 @@
       "edge": 23.4,
       "data_quality": 1,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-2"
+    },
+    {
+      "date": "2026-09-07",
+      "day_group_id": "2026-09-07",
+      "source": "fd",
+      "fixture_id": 567295,
+      "market_key": "away",
+      "match": "GD Estoril Praia - FC Arouca",
+      "pick": "FC Arouca \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.0,
+      "model_prob_raw": 0.72,
+      "edge": 39.0,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-07",
+      "day_group_id": "2026-09-07",
+      "source": "fd",
+      "fixture_id": 564658,
+      "market_key": "home",
+      "match": "Elche CF - Real Sociedad de F\u00fatbol",
+      "pick": "Elche CF \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.6,
+      "model_prob_raw": 0.32299999999999995,
+      "edge": 4.6,
+      "data_quality": 1,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -776,6 +812,10 @@
       "result": "win",
       "combined_odds": 9.71,
       "balance_delta": 87.13
+    },
+    "2026-09-06": {
+      "result": "loss",
+      "balance_delta": -10.0
     }
   }
 }
