@@ -734,7 +734,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-0"
     },
     {
       "date": "2026-09-07",
@@ -747,6 +748,71 @@
       "odds": 3.6,
       "model_prob_raw": 0.32299999999999995,
       "edge": 4.6,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-3"
+    },
+    {
+      "date": "2026-09-08",
+      "day_group_id": "2026-09-08",
+      "source": "fd",
+      "fixture_id": 558233,
+      "market_key": "away",
+      "match": "NEC - SBV Excelsior",
+      "pick": "SBV Excelsior \u03bd\u03af\u03ba\u03b7",
+      "odds": 5.12,
+      "model_prob_raw": 0.723,
+      "edge": 52.7,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-08",
+      "day_group_id": "2026-09-08",
+      "source": "fd",
+      "fixture_id": 561830,
+      "market_key": "home",
+      "match": "Wrexham AFC - Burnley FC",
+      "pick": "Wrexham AFC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.12,
+      "model_prob_raw": 0.706,
+      "edge": 24.1,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-08",
+      "day_group_id": "2026-09-08",
+      "source": "fd",
+      "fixture_id": 561824,
+      "market_key": "over25",
+      "match": "Cardiff City FC - Stoke City FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.62,
+      "model_prob_raw": 0.701,
+      "edge": 11.2,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-08",
+      "day_group_id": "2026-09-08",
+      "source": "fd",
+      "fixture_id": 561827,
+      "market_key": "away",
+      "match": "Bolton Wanderers FC - West Ham United FC",
+      "pick": "West Ham United FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.66,
+      "model_prob_raw": 0.6609999999999999,
+      "edge": 7.4,
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -814,6 +880,10 @@
       "balance_delta": 87.13
     },
     "2026-09-06": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-07": {
       "result": "loss",
       "balance_delta": -10.0
     }
