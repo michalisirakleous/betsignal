@@ -768,7 +768,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-2"
     },
     {
       "date": "2026-09-08",
@@ -784,7 +785,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-09-08",
@@ -800,7 +802,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-09-08",
@@ -813,6 +816,71 @@
       "odds": 1.66,
       "model_prob_raw": 0.6609999999999999,
       "edge": 7.4,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-3"
+    },
+    {
+      "date": "2026-09-09",
+      "day_group_id": "2026-09-09",
+      "source": "fd",
+      "fixture_id": 575333,
+      "market_key": "away",
+      "match": "SSC Napoli - Arsenal FC",
+      "pick": "Arsenal FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.69,
+      "model_prob_raw": 0.736,
+      "edge": 14.3,
+      "data_quality": 0,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "day_group_id": "2026-09-09",
+      "source": "fd",
+      "fixture_id": 561829,
+      "market_key": "away",
+      "match": "Derby County FC - West Bromwich Albion FC",
+      "pick": "West Bromwich Albion FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.2,
+      "model_prob_raw": 0.644,
+      "edge": 20.0,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "day_group_id": "2026-09-09",
+      "source": "fd",
+      "fixture_id": 561831,
+      "market_key": "away",
+      "match": "Charlton Athletic FC - Queens Park Rangers FC",
+      "pick": "Queens Park Rangers FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.38,
+      "model_prob_raw": 0.494,
+      "edge": 7.2,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-09",
+      "day_group_id": "2026-09-09",
+      "source": "fd",
+      "fixture_id": 561832,
+      "market_key": "away",
+      "match": "Norwich City FC - Birmingham City FC",
+      "pick": "Birmingham City FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 4.4,
+      "model_prob_raw": 0.396,
+      "edge": 15.6,
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -884,6 +952,10 @@
       "balance_delta": -10.0
     },
     "2026-09-07": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-08": {
       "result": "loss",
       "balance_delta": -10.0
     }
