@@ -904,6 +904,39 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-1"
+    },
+    {
+      "date": "2026-09-11",
+      "day_group_id": "2026-09-11",
+      "source": "fd",
+      "fixture_id": 558606,
+      "market_key": "home",
+      "match": "Venezia FC - ACF Fiorentina",
+      "pick": "Venezia FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.0,
+      "model_prob_raw": 0.602,
+      "edge": 26.7,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-11",
+      "day_group_id": "2026-09-11",
+      "source": "fd",
+      "fixture_id": 558899,
+      "market_key": "under25",
+      "match": "AZ - Willem II Tilburg",
+      "pick": "Under 2.5 goals",
+      "odds": 3.8,
+      "model_prob_raw": 0.326,
+      "edge": 7.1,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
       "result": null
     }
   ],
@@ -982,6 +1015,11 @@
     "2026-09-09": {
       "result": "loss",
       "balance_delta": -10.0
+    },
+    "2026-09-10": {
+      "result": "win",
+      "combined_odds": 1.96,
+      "balance_delta": 9.6
     }
   }
 }
