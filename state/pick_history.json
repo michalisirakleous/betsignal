@@ -921,7 +921,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-4"
     },
     {
       "date": "2026-09-11",
@@ -936,6 +937,71 @@
       "edge": 7.1,
       "data_quality": 1,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "1-1"
+    },
+    {
+      "date": "2026-09-12",
+      "day_group_id": "2026-09-12",
+      "source": "fd",
+      "fixture_id": 558607,
+      "market_key": "under25",
+      "match": "Atalanta BC - Cagliari Calcio",
+      "pick": "Under 2.5 goals",
+      "odds": 2.02,
+      "model_prob_raw": 0.865,
+      "edge": 36.0,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-12",
+      "day_group_id": "2026-09-12",
+      "source": "fd",
+      "fixture_id": 558600,
+      "market_key": "under25",
+      "match": "SS Lazio - AC Milan",
+      "pick": "Under 2.5 goals",
+      "odds": 1.75,
+      "model_prob_raw": 0.8140000000000001,
+      "edge": 24.2,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-12",
+      "day_group_id": "2026-09-12",
+      "source": "fd",
+      "fixture_id": 560572,
+      "market_key": "over25",
+      "match": "Crystal Palace FC - Ipswich Town FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.78,
+      "model_prob_raw": 0.797,
+      "edge": 25.0,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-12",
+      "day_group_id": "2026-09-12",
+      "source": "fd",
+      "fixture_id": 558604,
+      "market_key": "away",
+      "match": "Genoa CFC - Frosinone Calcio",
+      "pick": "Frosinone Calcio \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.55,
+      "model_prob_raw": 0.7759999999999999,
+      "edge": 48.7,
+      "data_quality": 1,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -1020,6 +1086,10 @@
       "result": "win",
       "combined_odds": 1.96,
       "balance_delta": 9.6
+    },
+    "2026-09-11": {
+      "result": "loss",
+      "balance_delta": -10.0
     }
   }
 }
