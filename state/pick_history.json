@@ -1023,7 +1023,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-5"
     },
     {
       "date": "2026-09-13",
@@ -1039,7 +1040,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-2"
     },
     {
       "date": "2026-09-13",
@@ -1055,7 +1057,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-7"
     },
     {
       "date": "2026-09-13",
@@ -1068,6 +1071,71 @@
       "odds": 1.69,
       "model_prob_raw": 0.7390000000000001,
       "edge": 16.0,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-0"
+    },
+    {
+      "date": "2026-09-14",
+      "day_group_id": "2026-09-14",
+      "source": "fd",
+      "fixture_id": 558603,
+      "market_key": "away",
+      "match": "Torino FC - AS Roma",
+      "pick": "AS Roma \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.6,
+      "model_prob_raw": 0.7759999999999999,
+      "edge": 15.3,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-14",
+      "day_group_id": "2026-09-14",
+      "source": "fd",
+      "fixture_id": 567303,
+      "market_key": "away",
+      "match": "Rio Ave FC - CF Estrela da Amadora",
+      "pick": "CF Estrela da Amadora \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.8,
+      "model_prob_raw": 0.764,
+      "edge": 40.9,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-14",
+      "day_group_id": "2026-09-14",
+      "source": "fd",
+      "fixture_id": 555001,
+      "market_key": "home",
+      "match": "EC Bahia - Clube do Remo",
+      "pick": "EC Bahia \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.47,
+      "model_prob_raw": 0.747,
+      "edge": 9.1,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-14",
+      "day_group_id": "2026-09-14",
+      "source": "fd",
+      "fixture_id": 560579,
+      "market_key": "under25",
+      "match": "Leeds United FC - Newcastle United FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.14,
+      "model_prob_raw": 0.649,
+      "edge": 19.3,
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
@@ -1160,6 +1228,10 @@
       "balance_delta": -10.0
     },
     "2026-09-12": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-13": {
       "result": "loss",
       "balance_delta": -10.0
     }
