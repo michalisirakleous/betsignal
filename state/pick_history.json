@@ -1091,7 +1091,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-2"
     },
     {
       "date": "2026-09-14",
@@ -1107,7 +1108,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-3"
     },
     {
       "date": "2026-09-14",
@@ -1123,7 +1125,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-09-14",
@@ -1138,6 +1141,71 @@
       "edge": 19.3,
       "data_quality": 1,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "4-1"
+    },
+    {
+      "date": "2026-09-15",
+      "day_group_id": "2026-09-15",
+      "source": "fd",
+      "fixture_id": 576251,
+      "market_key": "over25",
+      "match": "CA Platense - Fluminense FC",
+      "pick": "Over 2.5 goals",
+      "odds": 2.76,
+      "model_prob_raw": 0.779,
+      "edge": 43.8,
+      "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-15",
+      "day_group_id": "2026-09-15",
+      "source": "fd",
+      "fixture_id": 561825,
+      "market_key": "over25",
+      "match": "Middlesbrough FC - Millwall FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.61,
+      "model_prob_raw": 0.7170000000000001,
+      "edge": 11.4,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-15",
+      "day_group_id": "2026-09-15",
+      "source": "fd",
+      "fixture_id": 564680,
+      "market_key": "over25",
+      "match": "Deportivo Alav\u00e9s - Valencia CF",
+      "pick": "Over 2.5 goals",
+      "odds": 2.15,
+      "model_prob_raw": 0.6509999999999999,
+      "edge": 19.5,
+      "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-15",
+      "day_group_id": "2026-09-15",
+      "source": "fd",
+      "fixture_id": 564678,
+      "market_key": "away",
+      "match": "Rayo Vallecano de Madrid - RCD Espanyol de Barcelona",
+      "pick": "RCD Espanyol de Barcelona \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.25,
+      "model_prob_raw": 0.638,
+      "edge": 32.9,
+      "data_quality": 1,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -1232,6 +1300,10 @@
       "balance_delta": -10.0
     },
     "2026-09-13": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-14": {
       "result": "loss",
       "balance_delta": -10.0
     }
