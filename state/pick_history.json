@@ -1159,7 +1159,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-09-15",
@@ -1175,7 +1176,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-2"
     },
     {
       "date": "2026-09-15",
@@ -1191,7 +1193,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-09-15",
@@ -1206,6 +1209,71 @@
       "edge": 32.9,
       "data_quality": 1,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-1"
+    },
+    {
+      "date": "2026-09-16",
+      "day_group_id": "2026-09-16",
+      "source": "fd",
+      "fixture_id": 554941,
+      "market_key": "under25",
+      "match": "Botafogo FR - Gr\u00eamio FBPA",
+      "pick": "Under 2.5 goals",
+      "odds": 2.23,
+      "model_prob_raw": 0.698,
+      "edge": 24.6,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-16",
+      "day_group_id": "2026-09-16",
+      "source": "fd",
+      "fixture_id": 564685,
+      "market_key": "over25",
+      "match": "Levante UD - Athletic Club",
+      "pick": "Over 2.5 goals",
+      "odds": 1.89,
+      "model_prob_raw": 0.6559999999999999,
+      "edge": 13.5,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-16",
+      "day_group_id": "2026-09-16",
+      "source": "fd",
+      "fixture_id": 576250,
+      "market_key": "over25",
+      "match": "LDU de Quito - SE Palmeiras",
+      "pick": "Over 2.5 goals",
+      "odds": 2.55,
+      "model_prob_raw": 0.584,
+      "edge": 20.2,
+      "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-16",
+      "day_group_id": "2026-09-16",
+      "source": "fd",
+      "fixture_id": 564679,
+      "market_key": "over25",
+      "match": "RC Deportivo La Coru\u00f1a - Sevilla FC",
+      "pick": "Over 2.5 goals",
+      "odds": 2.34,
+      "model_prob_raw": 0.578,
+      "edge": 14.5,
+      "data_quality": 1,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -1304,6 +1372,10 @@
       "balance_delta": -10.0
     },
     "2026-09-14": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-15": {
       "result": "loss",
       "balance_delta": -10.0
     }
