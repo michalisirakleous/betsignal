@@ -1227,7 +1227,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-2"
     },
     {
       "date": "2026-09-16",
@@ -1243,7 +1244,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "void",
+      "final_score": "POSTPONED"
     },
     {
       "date": "2026-09-16",
@@ -1273,6 +1275,39 @@
       "model_prob_raw": 0.578,
       "edge": 14.5,
       "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "0-1"
+    },
+    {
+      "date": "2026-09-17",
+      "day_group_id": "2026-09-17",
+      "source": "fd",
+      "fixture_id": 564686,
+      "market_key": "home",
+      "match": "Real Betis Balompi\u00e9 - Getafe CF",
+      "pick": "Real Betis Balompi\u00e9 \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.67,
+      "model_prob_raw": 0.6940000000000001,
+      "edge": 10.3,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-17",
+      "day_group_id": "2026-09-17",
+      "source": "fd",
+      "fixture_id": 564683,
+      "market_key": "under25",
+      "match": "M\u00e1laga CF - Villarreal CF",
+      "pick": "Under 2.5 goals",
+      "odds": 2.38,
+      "model_prob_raw": 0.61,
+      "edge": 20.3,
+      "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
