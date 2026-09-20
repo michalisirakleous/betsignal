@@ -1397,7 +1397,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-3"
     },
     {
       "date": "2026-09-19",
@@ -1413,7 +1414,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-2"
     },
     {
       "date": "2026-09-19",
@@ -1429,7 +1431,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-2"
     },
     {
       "date": "2026-09-19",
@@ -1443,6 +1446,71 @@
       "model_prob_raw": 0.742,
       "edge": 36.1,
       "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-1"
+    },
+    {
+      "date": "2026-09-20",
+      "day_group_id": "2026-09-20",
+      "source": "fd",
+      "fixture_id": 567319,
+      "market_key": "under25",
+      "match": "GD Estoril Praia - Casa Pia AC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.1,
+      "model_prob_raw": 0.873,
+      "edge": 40.4,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-20",
+      "day_group_id": "2026-09-20",
+      "source": "fd",
+      "fixture_id": 567315,
+      "market_key": "under25",
+      "match": "Vit\u00f3ria SC - Moreirense FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.08,
+      "model_prob_raw": 0.8290000000000001,
+      "edge": 34.1,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-20",
+      "day_group_id": "2026-09-20",
+      "source": "fd",
+      "fixture_id": 558590,
+      "market_key": "under25",
+      "match": "Parma Calcio 1913 - Genoa CFC",
+      "pick": "Under 2.5 goals",
+      "odds": 1.58,
+      "model_prob_raw": 0.8009999999999999,
+      "edge": 18.3,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-09-20",
+      "day_group_id": "2026-09-20",
+      "source": "fd",
+      "fixture_id": 561850,
+      "market_key": "home",
+      "match": "Norwich City FC - Bolton Wanderers FC",
+      "pick": "Norwich City FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.46,
+      "model_prob_raw": 0.737,
+      "edge": 7.2,
+      "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
@@ -1558,6 +1626,10 @@
       "balance_delta": -10.0
     },
     "2026-09-18": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-09-19": {
       "result": "loss",
       "balance_delta": -10.0
     }
