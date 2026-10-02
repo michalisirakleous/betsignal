@@ -1518,6 +1518,22 @@
       "bookmaker_consensus": true,
       "result": "loss",
       "final_score": "3-4"
+    },
+    {
+      "date": "2026-10-02",
+      "day_group_id": "2026-10-02",
+      "source": "fd",
+      "fixture_id": 554948,
+      "market_key": "away",
+      "match": "S\u00e3o Paulo FC - Santos FC",
+      "pick": "Santos FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 4.2,
+      "model_prob_raw": 0.415,
+      "edge": 16.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
     }
   ],
   "calibration_factor": 0.8,
