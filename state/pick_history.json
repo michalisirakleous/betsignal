@@ -1533,7 +1533,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-2"
     }
   ],
   "calibration_factor": 0.8,
@@ -1656,6 +1657,11 @@
     "2026-09-20": {
       "result": "loss",
       "balance_delta": -10.0
+    },
+    "2026-10-02": {
+      "result": "win",
+      "combined_odds": 4.2,
+      "balance_delta": 32.0
     }
   }
 }
