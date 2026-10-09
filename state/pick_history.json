@@ -1601,6 +1601,71 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-2"
+    },
+    {
+      "date": "2026-10-09",
+      "day_group_id": "2026-10-09",
+      "source": "fd",
+      "fixture_id": 564706,
+      "market_key": "away",
+      "match": "M\u00e1laga CF - RCD Espanyol de Barcelona",
+      "pick": "RCD Espanyol de Barcelona \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.66,
+      "model_prob_raw": 0.551,
+      "edge": 17.5,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-09",
+      "day_group_id": "2026-10-09",
+      "source": "fd",
+      "fixture_id": 567327,
+      "market_key": "home",
+      "match": "Moreirense FC - Gil Vicente FC",
+      "pick": "Moreirense FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.6,
+      "model_prob_raw": 0.381,
+      "edge": 10.6,
+      "data_quality": 2,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-09",
+      "day_group_id": "2026-10-09",
+      "source": "fd",
+      "fixture_id": 565820,
+      "market_key": "under25",
+      "match": "Borussia Dortmund - SV Werder Bremen",
+      "pick": "Under 2.5 goals",
+      "odds": 3.2,
+      "model_prob_raw": 0.315,
+      "edge": 0.8,
+      "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-09",
+      "day_group_id": "2026-10-09",
+      "source": "fd",
+      "fixture_id": 558881,
+      "market_key": "away",
+      "match": "PSV - SC Heerenveen",
+      "pick": "SC Heerenveen \u03bd\u03af\u03ba\u03b7",
+      "odds": 8.5,
+      "model_prob_raw": 0.253,
+      "edge": 11.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
       "result": null
     }
   ],
@@ -1731,6 +1796,10 @@
       "balance_delta": 32.0
     },
     "2026-10-07": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-08": {
       "result": "loss",
       "balance_delta": -10.0
     }
