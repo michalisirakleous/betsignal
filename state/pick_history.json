@@ -1686,7 +1686,8 @@
       "data_quality": 2,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-10-10",
@@ -1702,7 +1703,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-0"
     },
     {
       "date": "2026-10-10",
@@ -1718,7 +1720,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-1"
     },
     {
       "date": "2026-10-10",
@@ -1733,6 +1736,71 @@
       "edge": 16.6,
       "data_quality": 1,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "3-4"
+    },
+    {
+      "date": "2026-10-11",
+      "day_group_id": "2026-10-11",
+      "source": "fd",
+      "fixture_id": 560594,
+      "market_key": "under25",
+      "match": "Hull City AFC - Everton FC",
+      "pick": "Under 2.5 goals",
+      "odds": 1.86,
+      "model_prob_raw": 0.8320000000000001,
+      "edge": 30.2,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-11",
+      "day_group_id": "2026-10-11",
+      "source": "fd",
+      "fixture_id": 558584,
+      "market_key": "under25",
+      "match": "Cagliari Calcio - Juventus FC",
+      "pick": "Under 2.5 goals",
+      "odds": 1.92,
+      "model_prob_raw": 0.81,
+      "edge": 29.5,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-11",
+      "day_group_id": "2026-10-11",
+      "source": "fd",
+      "fixture_id": 564701,
+      "market_key": "home",
+      "match": "Real Betis Balompi\u00e9 - CA Osasuna",
+      "pick": "Real Betis Balompi\u00e9 \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.56,
+      "model_prob_raw": 0.792,
+      "edge": 15.1,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-11",
+      "day_group_id": "2026-10-11",
+      "source": "fd",
+      "fixture_id": 555037,
+      "market_key": "home",
+      "match": "SE Palmeiras - SC Corinthians Paulista",
+      "pick": "SE Palmeiras \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.69,
+      "model_prob_raw": 0.7879999999999999,
+      "edge": 21.0,
+      "data_quality": 3,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -1872,6 +1940,10 @@
       "balance_delta": -10.0
     },
     "2026-10-09": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-10": {
       "result": "loss",
       "balance_delta": -10.0
     }
