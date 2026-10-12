@@ -1754,7 +1754,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-2"
     },
     {
       "date": "2026-10-11",
@@ -1770,7 +1771,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-1"
     },
     {
       "date": "2026-10-11",
@@ -1786,7 +1788,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "5-2"
     },
     {
       "date": "2026-10-11",
@@ -1799,6 +1802,71 @@
       "odds": 1.69,
       "model_prob_raw": 0.7879999999999999,
       "edge": 21.0,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "4-1"
+    },
+    {
+      "date": "2026-10-12",
+      "day_group_id": "2026-10-12",
+      "source": "fd",
+      "fixture_id": 560597,
+      "market_key": "away",
+      "match": "Coventry City FC - Newcastle United FC",
+      "pick": "Newcastle United FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.2,
+      "model_prob_raw": 0.7909999999999999,
+      "edge": 34.0,
+      "data_quality": 1,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "day_group_id": "2026-10-12",
+      "source": "fd",
+      "fixture_id": 558579,
+      "market_key": "home",
+      "match": "Atalanta BC - Venezia FC",
+      "pick": "Atalanta BC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.58,
+      "model_prob_raw": 0.738,
+      "edge": 10.8,
+      "data_quality": 2,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "day_group_id": "2026-10-12",
+      "source": "fd",
+      "fixture_id": 558587,
+      "market_key": "over25",
+      "match": "Torino FC - Udinese Calcio",
+      "pick": "Over 2.5 goals",
+      "odds": 2.32,
+      "model_prob_raw": 0.7040000000000001,
+      "edge": 27.2,
+      "data_quality": 1,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-12",
+      "day_group_id": "2026-10-12",
+      "source": "fd",
+      "fixture_id": 555034,
+      "market_key": "home",
+      "match": "Coritiba FBC - Botafogo FR",
+      "pick": "Coritiba FBC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.8,
+      "model_prob_raw": 0.6459999999999999,
+      "edge": 29.4,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -1944,6 +2012,10 @@
       "balance_delta": -10.0
     },
     "2026-10-10": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-11": {
       "result": "loss",
       "balance_delta": -10.0
     }
