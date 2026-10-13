@@ -1,6 +1,6 @@
 {
   "month": "2026-10",
-  "calls": 41,
+  "calls": 44,
   "sport_keys_no_double_chance": [
     "soccer_brazil_campeonato",
     "soccer_spain_la_liga",
@@ -10,6 +10,7 @@
     "soccer_portugal_primeira_liga",
     "soccer_netherlands_eredivisie",
     "soccer_epl",
-    "soccer_italy_serie_a"
+    "soccer_italy_serie_a",
+    "soccer_uefa_champs_league"
   ]
 }

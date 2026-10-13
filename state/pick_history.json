@@ -1822,7 +1822,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "4-1"
     },
     {
       "date": "2026-10-12",
@@ -1838,7 +1839,8 @@
       "data_quality": 2,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-1"
     },
     {
       "date": "2026-10-12",
@@ -1854,7 +1856,8 @@
       "data_quality": 1,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-10-12",
@@ -1869,6 +1872,71 @@
       "edge": 29.4,
       "data_quality": 3,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-1"
+    },
+    {
+      "date": "2026-10-13",
+      "day_group_id": "2026-10-13",
+      "source": "fd",
+      "fixture_id": 561869,
+      "market_key": "over25",
+      "match": "Wolverhampton Wanderers FC - Bolton Wanderers FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.58,
+      "model_prob_raw": 0.708,
+      "edge": 10.4,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-13",
+      "day_group_id": "2026-10-13",
+      "source": "fd",
+      "fixture_id": 575348,
+      "market_key": "home",
+      "match": "RB Leipzig - PSV",
+      "pick": "RB Leipzig \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.65,
+      "model_prob_raw": 0.691,
+      "edge": 7.9,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-13",
+      "day_group_id": "2026-10-13",
+      "source": "fd",
+      "fixture_id": 561871,
+      "market_key": "over25",
+      "match": "Millwall FC - Swansea City AFC",
+      "pick": "Over 2.5 goals",
+      "odds": 2.12,
+      "model_prob_raw": 0.672,
+      "edge": 20.4,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-13",
+      "day_group_id": "2026-10-13",
+      "source": "fd",
+      "fixture_id": 561875,
+      "market_key": "over25",
+      "match": "Birmingham City FC - Preston North End FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.79,
+      "model_prob_raw": 0.638,
+      "edge": 8.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -2016,6 +2084,10 @@
       "balance_delta": -10.0
     },
     "2026-10-11": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-12": {
       "result": "loss",
       "balance_delta": -10.0
     }
