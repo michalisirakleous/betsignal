@@ -1958,7 +1958,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-10-14",
@@ -1974,7 +1975,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "4-1"
     },
     {
       "date": "2026-10-14",
@@ -1990,7 +1992,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-4"
     },
     {
       "date": "2026-10-14",
