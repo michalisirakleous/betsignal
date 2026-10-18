@@ -2094,7 +2094,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-10-17",
@@ -2110,7 +2111,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-2"
     },
     {
       "date": "2026-10-17",
@@ -2126,7 +2128,8 @@
       "data_quality": 1,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-2"
     },
     {
       "date": "2026-10-17",
@@ -2140,6 +2143,71 @@
       "model_prob_raw": 0.7170000000000001,
       "edge": 16.1,
       "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-0"
+    },
+    {
+      "date": "2026-10-18",
+      "day_group_id": "2026-10-18",
+      "source": "fd",
+      "fixture_id": 560608,
+      "market_key": "under25",
+      "match": "Nottingham Forest FC - Arsenal FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.06,
+      "model_prob_raw": 0.8170000000000001,
+      "edge": 33.5,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-18",
+      "day_group_id": "2026-10-18",
+      "source": "fd",
+      "fixture_id": 558570,
+      "market_key": "under25",
+      "match": "Juventus FC - SS Lazio",
+      "pick": "Under 2.5 goals",
+      "odds": 2.06,
+      "model_prob_raw": 0.8109999999999999,
+      "edge": 31.8,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-18",
+      "day_group_id": "2026-10-18",
+      "source": "fd",
+      "fixture_id": 560609,
+      "market_key": "home",
+      "match": "Brighton & Hove Albion FC - Crystal Palace FC",
+      "pick": "Brighton & Hove Albion FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.51,
+      "model_prob_raw": 0.785,
+      "edge": 13.4,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-18",
+      "day_group_id": "2026-10-18",
+      "source": "fd",
+      "fixture_id": 559665,
+      "market_key": "home",
+      "match": "Olympique Lyonnais - OGC Nice",
+      "pick": "Olympique Lyonnais \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.93,
+      "model_prob_raw": 0.784,
+      "edge": 27.8,
+      "data_quality": 2,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
@@ -2304,6 +2372,10 @@
       "balance_delta": -10.0
     },
     "2026-10-16": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-17": {
       "result": "loss",
       "balance_delta": -10.0
     }
