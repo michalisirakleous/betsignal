@@ -2230,7 +2230,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-1"
     },
     {
       "date": "2026-10-19",
@@ -2246,7 +2247,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-2"
     },
     {
       "date": "2026-10-19",
@@ -2262,7 +2264,8 @@
       "data_quality": 2,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "4-0"
     },
     {
       "date": "2026-10-19",
@@ -2275,6 +2278,55 @@
       "odds": 3.2,
       "model_prob_raw": 0.628,
       "edge": 31.7,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-1"
+    },
+    {
+      "date": "2026-10-20",
+      "day_group_id": "2026-10-20",
+      "source": "fd",
+      "fixture_id": 575367,
+      "market_key": "away",
+      "match": "Paris Saint-Germain FC - FC Barcelona",
+      "pick": "FC Barcelona \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.52,
+      "model_prob_raw": 0.47200000000000003,
+      "edge": 7.5,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-20",
+      "day_group_id": "2026-10-20",
+      "source": "fd",
+      "fixture_id": 575363,
+      "market_key": "away",
+      "match": "Liverpool FC - Villarreal CF",
+      "pick": "Villarreal CF \u03bd\u03af\u03ba\u03b7",
+      "odds": 6.8,
+      "model_prob_raw": 0.34,
+      "edge": 18.1,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-20",
+      "day_group_id": "2026-10-20",
+      "source": "fd",
+      "fixture_id": 575365,
+      "market_key": "away",
+      "match": "FC Porto - PSV",
+      "pick": "PSV \u03bd\u03af\u03ba\u03b7",
+      "odds": 6.2,
+      "model_prob_raw": 0.305,
+      "edge": 13.6,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -2448,6 +2500,10 @@
       "balance_delta": -10.0
     },
     "2026-10-18": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-19": {
       "result": "loss",
       "balance_delta": -10.0
     }
