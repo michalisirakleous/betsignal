@@ -2502,7 +2502,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-10-24",
@@ -2518,7 +2519,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-3"
     },
     {
       "date": "2026-10-24",
