@@ -2621,7 +2621,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-0"
     },
     {
       "date": "2026-10-26",
@@ -2637,7 +2638,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-10-26",
@@ -2650,6 +2652,55 @@
       "odds": 9.0,
       "model_prob_raw": 0.318,
       "edge": 20.0,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-0"
+    },
+    {
+      "date": "2026-10-27",
+      "day_group_id": "2026-10-27",
+      "source": "fd",
+      "fixture_id": 558557,
+      "market_key": "over25",
+      "match": "Torino FC - Como 1907",
+      "pick": "Over 2.5 goals",
+      "odds": 1.76,
+      "model_prob_raw": 0.736,
+      "edge": 16.9,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-27",
+      "day_group_id": "2026-10-27",
+      "source": "fd",
+      "fixture_id": 558556,
+      "market_key": "away",
+      "match": "US Sassuolo Calcio - SS Lazio",
+      "pick": "SS Lazio \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.16,
+      "model_prob_raw": 0.727,
+      "edge": 27.3,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-27",
+      "day_group_id": "2026-10-27",
+      "source": "fd",
+      "fixture_id": 558555,
+      "market_key": "away",
+      "match": "AS Roma - Cagliari Calcio",
+      "pick": "Cagliari Calcio \u03bd\u03af\u03ba\u03b7",
+      "odds": 11.0,
+      "model_prob_raw": 0.17800000000000002,
+      "edge": 8.3,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -2847,6 +2898,10 @@
       "balance_delta": -10.0
     },
     "2026-10-25": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-26": {
       "result": "loss",
       "balance_delta": -10.0
     }
