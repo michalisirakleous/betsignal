@@ -2723,7 +2723,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-0"
     },
     {
       "date": "2026-10-28",
@@ -2739,7 +2740,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-0"
     },
     {
       "date": "2026-10-28",
@@ -2755,7 +2757,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-4"
     },
     {
       "date": "2026-10-28",
@@ -2768,6 +2771,55 @@
       "odds": 4.8,
       "model_prob_raw": 0.669,
       "edge": 45.5,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-4"
+    },
+    {
+      "date": "2026-10-29",
+      "day_group_id": "2026-10-29",
+      "source": "fd",
+      "fixture_id": 558551,
+      "market_key": "away",
+      "match": "ACF Fiorentina - Atalanta BC",
+      "pick": "Atalanta BC \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.1,
+      "model_prob_raw": 0.504,
+      "edge": 17.6,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "day_group_id": "2026-10-29",
+      "source": "fd",
+      "fixture_id": 558558,
+      "market_key": "under25",
+      "match": "Frosinone Calcio - US Lecce",
+      "pick": "Under 2.5 goals",
+      "odds": 2.99,
+      "model_prob_raw": 0.37799999999999995,
+      "edge": 5.6,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-29",
+      "day_group_id": "2026-10-29",
+      "source": "fd",
+      "fixture_id": 555069,
+      "market_key": "home",
+      "match": "CR Vasco da Gama - CR Flamengo",
+      "pick": "CR Vasco da Gama \u03bd\u03af\u03ba\u03b7",
+      "odds": 4.4,
+      "model_prob_raw": 0.285,
+      "edge": 4.9,
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
@@ -2973,6 +3025,10 @@
       "balance_delta": -10.0
     },
     "2026-10-27": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-28": {
       "result": "loss",
       "balance_delta": -10.0
     }
