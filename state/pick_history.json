@@ -2791,7 +2791,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-2"
     },
     {
       "date": "2026-10-29",
@@ -2807,7 +2808,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "5-1"
     },
     {
       "date": "2026-10-29",
@@ -2822,6 +2824,71 @@
       "edge": 4.9,
       "data_quality": 3,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-4"
+    },
+    {
+      "date": "2026-10-30",
+      "day_group_id": "2026-10-30",
+      "source": "fd",
+      "fixture_id": 565846,
+      "market_key": "over25",
+      "match": "SV 07 Elversberg - 1. FSV Mainz 05",
+      "pick": "Over 2.5 goals",
+      "odds": 1.49,
+      "model_prob_raw": 0.732,
+      "edge": 9.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "day_group_id": "2026-10-30",
+      "source": "fd",
+      "fixture_id": 561916,
+      "market_key": "home",
+      "match": "Sheffield United FC - Wrexham AFC",
+      "pick": "Sheffield United FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.5,
+      "model_prob_raw": 0.633,
+      "edge": 22.8,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "day_group_id": "2026-10-30",
+      "source": "fd",
+      "fixture_id": 555063,
+      "market_key": "away",
+      "match": "SC Corinthians Paulista - Mirassol FC",
+      "pick": "Mirassol FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 4.5,
+      "model_prob_raw": 0.478,
+      "edge": 25.2,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-10-30",
+      "day_group_id": "2026-10-30",
+      "source": "fd",
+      "fixture_id": 559644,
+      "market_key": "under25",
+      "match": "Le Havre AC - Paris Saint-Germain FC",
+      "pick": "Under 2.5 goals",
+      "odds": 3.0,
+      "model_prob_raw": 0.359,
+      "edge": 4.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3029,6 +3096,10 @@
       "balance_delta": -10.0
     },
     "2026-10-28": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-29": {
       "result": "loss",
       "balance_delta": -10.0
     }
