@@ -2859,7 +2859,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-0"
     },
     {
       "date": "2026-10-30",
@@ -2909,7 +2910,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-2"
     },
     {
       "date": "2026-10-31",
@@ -2925,7 +2927,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-10-31",
@@ -2941,7 +2944,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-2"
     },
     {
       "date": "2026-10-31",
@@ -2956,6 +2960,71 @@
       "edge": 22.8,
       "data_quality": 3,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-0"
+    },
+    {
+      "date": "2026-11-01",
+      "day_group_id": "2026-11-01",
+      "source": "fd",
+      "fixture_id": 559645,
+      "market_key": "over25",
+      "match": "Olympique de Marseille - Toulouse FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.53,
+      "model_prob_raw": 0.795,
+      "edge": 16.5,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-01",
+      "day_group_id": "2026-11-01",
+      "source": "fd",
+      "fixture_id": 559647,
+      "market_key": "over25",
+      "match": "RC Strasbourg Alsace - AJ Auxerre",
+      "pick": "Over 2.5 goals",
+      "odds": 1.65,
+      "model_prob_raw": 0.784,
+      "edge": 18.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-01",
+      "day_group_id": "2026-11-01",
+      "source": "fd",
+      "fixture_id": 567341,
+      "market_key": "home",
+      "match": "FC Arouca - CD Nacional",
+      "pick": "FC Arouca \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.64,
+      "model_prob_raw": 0.769,
+      "edge": 17.7,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-01",
+      "day_group_id": "2026-11-01",
+      "source": "fd",
+      "fixture_id": 558846,
+      "market_key": "over25",
+      "match": "FC Groningen - Sparta Rotterdam",
+      "pick": "Over 2.5 goals",
+      "odds": 1.43,
+      "model_prob_raw": 0.73,
+      "edge": 7.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3169,6 +3238,15 @@
     "2026-10-29": {
       "result": "loss",
       "balance_delta": -10.0
+    },
+    "2026-10-30": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-10-31": {
+      "result": "win",
+      "combined_odds": 9.54,
+      "balance_delta": 85.42
     }
   }
 }
