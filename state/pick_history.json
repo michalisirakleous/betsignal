@@ -2978,7 +2978,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-0"
     },
     {
       "date": "2026-11-01",
@@ -2994,7 +2995,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "5-1"
     },
     {
       "date": "2026-11-01",
@@ -3010,7 +3012,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-0"
     },
     {
       "date": "2026-11-01",
@@ -3023,6 +3026,71 @@
       "odds": 1.43,
       "model_prob_raw": 0.73,
       "edge": 7.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-3"
+    },
+    {
+      "date": "2026-11-02",
+      "day_group_id": "2026-11-02",
+      "source": "fd",
+      "fixture_id": 558545,
+      "market_key": "home",
+      "match": "Atalanta BC - Parma Calcio 1913",
+      "pick": "Atalanta BC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.53,
+      "model_prob_raw": 0.763,
+      "edge": 12.3,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_group_id": "2026-11-02",
+      "source": "fd",
+      "fixture_id": 564731,
+      "market_key": "home",
+      "match": "RC Deportivo La Coru\u00f1a - CA Osasuna",
+      "pick": "RC Deportivo La Coru\u00f1a \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.22,
+      "model_prob_raw": 0.711,
+      "edge": 26.6,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_group_id": "2026-11-02",
+      "source": "fd",
+      "fixture_id": 567346,
+      "market_key": "home",
+      "match": "Gil Vicente FC - Vit\u00f3ria SC",
+      "pick": "Gil Vicente FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.04,
+      "model_prob_raw": 0.56,
+      "edge": 23.4,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_group_id": "2026-11-02",
+      "source": "fd",
+      "fixture_id": 560622,
+      "market_key": "under25",
+      "match": "Newcastle United FC - Everton FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.25,
+      "model_prob_raw": 0.556,
+      "edge": 11.8,
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
@@ -3247,6 +3315,10 @@
       "result": "win",
       "combined_odds": 9.54,
       "balance_delta": 85.42
+    },
+    "2026-11-01": {
+      "result": "loss",
+      "balance_delta": -10.0
     }
   }
 }
