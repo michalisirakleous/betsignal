@@ -3046,7 +3046,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-3"
     },
     {
       "date": "2026-11-02",
@@ -3062,7 +3063,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-11-02",
@@ -3078,7 +3080,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-0"
     },
     {
       "date": "2026-11-02",
@@ -3092,6 +3095,71 @@
       "model_prob_raw": 0.556,
       "edge": 11.8,
       "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "0-1"
+    },
+    {
+      "date": "2026-11-03",
+      "day_group_id": "2026-11-03",
+      "source": "fd",
+      "fixture_id": 561917,
+      "market_key": "home",
+      "match": "Birmingham City FC - Millwall FC",
+      "pick": "Birmingham City FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.02,
+      "model_prob_raw": 0.711,
+      "edge": 22.5,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-03",
+      "day_group_id": "2026-11-03",
+      "source": "fd",
+      "fixture_id": 561920,
+      "market_key": "home",
+      "match": "Queens Park Rangers FC - Burnley FC",
+      "pick": "Queens Park Rangers FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.06,
+      "model_prob_raw": 0.69,
+      "edge": 21.5,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-03",
+      "day_group_id": "2026-11-03",
+      "source": "fd",
+      "fixture_id": 575382,
+      "market_key": "away",
+      "match": "Villarreal CF - Paris Saint-Germain FC",
+      "pick": "Paris Saint-Germain FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.78,
+      "model_prob_raw": 0.648,
+      "edge": 9.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-03",
+      "day_group_id": "2026-11-03",
+      "source": "fd",
+      "fixture_id": 575378,
+      "market_key": "away",
+      "match": "Galatasaray SK - VfB Stuttgart",
+      "pick": "VfB Stuttgart \u03bd\u03af\u03ba\u03b7",
+      "odds": 3.35,
+      "model_prob_raw": 0.644,
+      "edge": 34.4,
+      "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
@@ -3317,6 +3385,10 @@
       "balance_delta": 85.42
     },
     "2026-11-01": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-02": {
       "result": "loss",
       "balance_delta": -10.0
     }
