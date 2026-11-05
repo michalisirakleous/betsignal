@@ -3182,7 +3182,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-2"
     },
     {
       "date": "2026-11-04",
@@ -3198,7 +3199,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-2"
     },
     {
       "date": "2026-11-04",
@@ -3214,7 +3216,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "2-0"
     },
     {
       "date": "2026-11-04",
@@ -3228,6 +3231,23 @@
       "model_prob_raw": 0.633,
       "edge": 14.3,
       "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "1-2"
+    },
+    {
+      "date": "2026-11-05",
+      "day_group_id": "2026-11-05",
+      "source": "fd",
+      "fixture_id": 555077,
+      "market_key": "away",
+      "match": "SE Palmeiras - Clube do Remo",
+      "pick": "Clube do Remo \u03bd\u03af\u03ba\u03b7",
+      "odds": 15.5,
+      "model_prob_raw": 0.12300000000000001,
+      "edge": 4.6,
+      "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
@@ -3461,6 +3481,10 @@
       "balance_delta": -10.0
     },
     "2026-11-03": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-04": {
       "result": "loss",
       "balance_delta": -10.0
     }
