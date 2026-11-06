@@ -3250,6 +3250,71 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "6-1"
+    },
+    {
+      "date": "2026-11-06",
+      "day_group_id": "2026-11-06",
+      "source": "fd",
+      "fixture_id": 565852,
+      "market_key": "over25",
+      "match": "Hamburger SV - Borussia M\u00f6nchengladbach",
+      "pick": "Over 2.5 goals",
+      "odds": 1.82,
+      "model_prob_raw": 0.696,
+      "edge": 15.1,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-06",
+      "day_group_id": "2026-11-06",
+      "source": "fd",
+      "fixture_id": 561932,
+      "market_key": "away",
+      "match": "Derby County FC - Bolton Wanderers FC",
+      "pick": "Bolton Wanderers FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.78,
+      "model_prob_raw": 0.6829999999999999,
+      "edge": 32.6,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-06",
+      "day_group_id": "2026-11-06",
+      "source": "fd",
+      "fixture_id": 558845,
+      "market_key": "away",
+      "match": "Willem II Tilburg - PEC Zwolle",
+      "pick": "PEC Zwolle \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.17,
+      "model_prob_raw": 0.653,
+      "edge": 20.0,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-06",
+      "day_group_id": "2026-11-06",
+      "source": "fd",
+      "fixture_id": 560634,
+      "market_key": "under25",
+      "match": "Everton FC - Coventry City FC",
+      "pick": "Under 2.5 goals",
+      "odds": 2.15,
+      "model_prob_raw": 0.606,
+      "edge": 14.7,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
       "result": null
     }
   ],
@@ -3485,6 +3550,10 @@
       "balance_delta": -10.0
     },
     "2026-11-04": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-05": {
       "result": "loss",
       "balance_delta": -10.0
     }
