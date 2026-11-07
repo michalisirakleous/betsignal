@@ -3267,7 +3267,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-1"
     },
     {
       "date": "2026-11-06",
@@ -3283,7 +3284,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "3-1"
     },
     {
       "date": "2026-11-06",
@@ -3299,7 +3301,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-1"
     },
     {
       "date": "2026-11-06",
@@ -3314,6 +3317,71 @@
       "edge": 14.7,
       "data_quality": 3,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "3-1"
+    },
+    {
+      "date": "2026-11-07",
+      "day_group_id": "2026-11-07",
+      "source": "fd",
+      "fixture_id": 558841,
+      "market_key": "over25",
+      "match": "ADO Den Haag - Sparta Rotterdam",
+      "pick": "Over 2.5 goals",
+      "odds": 1.55,
+      "model_prob_raw": 0.784,
+      "edge": 17.9,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-07",
+      "day_group_id": "2026-11-07",
+      "source": "fd",
+      "fixture_id": 558843,
+      "market_key": "over25",
+      "match": "SBV Excelsior - Go Ahead Eagles",
+      "pick": "Over 2.5 goals",
+      "odds": 1.63,
+      "model_prob_raw": 0.764,
+      "edge": 17.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-07",
+      "day_group_id": "2026-11-07",
+      "source": "fd",
+      "fixture_id": 561935,
+      "market_key": "over25",
+      "match": "Blackburn Rovers FC - West Ham United FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.62,
+      "model_prob_raw": 0.759,
+      "edge": 16.9,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-07",
+      "day_group_id": "2026-11-07",
+      "source": "fd",
+      "fixture_id": 561940,
+      "market_key": "home",
+      "match": "Birmingham City FC - Swansea City AFC",
+      "pick": "Birmingham City FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.92,
+      "model_prob_raw": 0.72,
+      "edge": 21.0,
+      "data_quality": 3,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3554,6 +3622,10 @@
       "balance_delta": -10.0
     },
     "2026-11-05": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-06": {
       "result": "loss",
       "balance_delta": -10.0
     }
