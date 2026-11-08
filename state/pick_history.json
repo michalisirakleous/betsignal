@@ -3335,7 +3335,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-1"
     },
     {
       "date": "2026-11-07",
@@ -3351,7 +3352,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-11-07",
@@ -3367,7 +3369,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-11-07",
@@ -3382,6 +3385,71 @@
       "edge": 21.0,
       "data_quality": 3,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "2-1"
+    },
+    {
+      "date": "2026-11-08",
+      "day_group_id": "2026-11-08",
+      "source": "fd",
+      "fixture_id": 559633,
+      "market_key": "under25",
+      "match": "Le Havre AC - FC Lorient",
+      "pick": "Under 2.5 goals",
+      "odds": 1.84,
+      "model_prob_raw": 0.785,
+      "edge": 24.8,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-08",
+      "day_group_id": "2026-11-08",
+      "source": "fd",
+      "fixture_id": 560638,
+      "market_key": "home",
+      "match": "Brighton & Hove Albion FC - Brentford FC",
+      "pick": "Brighton & Hove Albion FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.92,
+      "model_prob_raw": 0.7809999999999999,
+      "edge": 26.6,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-08",
+      "day_group_id": "2026-11-08",
+      "source": "fd",
+      "fixture_id": 564743,
+      "market_key": "over25",
+      "match": "Real Sociedad de F\u00fatbol - Rayo Vallecano de Madrid",
+      "pick": "Over 2.5 goals",
+      "odds": 1.64,
+      "model_prob_raw": 0.731,
+      "edge": 12.7,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-08",
+      "day_group_id": "2026-11-08",
+      "source": "fd",
+      "fixture_id": 560635,
+      "market_key": "over25",
+      "match": "Crystal Palace FC - Liverpool FC",
+      "pick": "Over 2.5 goals",
+      "odds": 1.47,
+      "model_prob_raw": 0.722,
+      "edge": 7.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3626,6 +3694,10 @@
       "balance_delta": -10.0
     },
     "2026-11-06": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-07": {
       "result": "loss",
       "balance_delta": -10.0
     }
