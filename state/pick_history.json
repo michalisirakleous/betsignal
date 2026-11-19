@@ -3488,7 +3488,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-11-18",
@@ -3504,7 +3505,8 @@
       "data_quality": 3,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-11-18",
@@ -3519,6 +3521,23 @@
       "edge": 7.7,
       "data_quality": 3,
       "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": "loss",
+      "final_score": "2-0"
+    },
+    {
+      "date": "2026-11-19",
+      "day_group_id": "2026-11-19",
+      "source": "fd",
+      "fixture_id": 555088,
+      "market_key": "over25",
+      "match": "CR Vasco da Gama - SC Internacional",
+      "pick": "Over 2.5 goals",
+      "odds": 1.79,
+      "model_prob_raw": 0.6709999999999999,
+      "edge": 12.0,
+      "data_quality": 3,
+      "h2h_agrees": null,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3775,6 +3794,10 @@
       "balance_delta": -10.0
     },
     "2026-11-14": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-18": {
       "result": "loss",
       "balance_delta": -10.0
     }
