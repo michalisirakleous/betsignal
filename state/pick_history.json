@@ -3556,7 +3556,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-1"
     },
     {
       "date": "2026-11-20",
@@ -3571,6 +3572,71 @@
       "edge": 16.5,
       "data_quality": 3,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "0-1"
+    },
+    {
+      "date": "2026-11-21",
+      "day_group_id": "2026-11-21",
+      "source": "fd",
+      "fixture_id": 555092,
+      "market_key": "home",
+      "match": "EC Bahia - Coritiba FBC",
+      "pick": "EC Bahia \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.52,
+      "model_prob_raw": 0.795,
+      "edge": 15.6,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-21",
+      "day_group_id": "2026-11-21",
+      "source": "fd",
+      "fixture_id": 565861,
+      "market_key": "under25",
+      "match": "FC Schalke 04 - VfB Stuttgart",
+      "pick": "Under 2.5 goals",
+      "odds": 2.61,
+      "model_prob_raw": 0.779,
+      "edge": 41.2,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-21",
+      "day_group_id": "2026-11-21",
+      "source": "fd",
+      "fixture_id": 565860,
+      "market_key": "over25",
+      "match": "SV 07 Elversberg - SC Freiburg",
+      "pick": "Over 2.5 goals",
+      "odds": 1.86,
+      "model_prob_raw": 0.779,
+      "edge": 22.6,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-21",
+      "day_group_id": "2026-11-21",
+      "source": "fd",
+      "fixture_id": 561943,
+      "market_key": "home",
+      "match": "Middlesbrough FC - Bristol City FC",
+      "pick": "Middlesbrough FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 1.43,
+      "model_prob_raw": 0.773,
+      "edge": 8.6,
+      "data_quality": 1,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -3838,6 +3904,11 @@
       "result": "win",
       "combined_odds": 1.79,
       "balance_delta": 7.9
+    },
+    "2026-11-20": {
+      "result": "win",
+      "combined_odds": 4.63,
+      "balance_delta": 36.26
     }
   }
 }
