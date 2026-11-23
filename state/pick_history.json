@@ -3658,7 +3658,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-1"
     },
     {
       "date": "2026-11-22",
@@ -3674,7 +3675,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "0-1"
     },
     {
       "date": "2026-11-22",
@@ -3690,7 +3692,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "3-2"
     },
     {
       "date": "2026-11-22",
@@ -3703,6 +3706,71 @@
       "odds": 1.42,
       "model_prob_raw": 0.759,
       "edge": 9.0,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "5-1"
+    },
+    {
+      "date": "2026-11-23",
+      "day_group_id": "2026-11-23",
+      "source": "fd",
+      "fixture_id": 558519,
+      "market_key": "over25",
+      "match": "AC Monza - ACF Fiorentina",
+      "pick": "Over 2.5 goals",
+      "odds": 1.7,
+      "model_prob_raw": 0.797,
+      "edge": 22.3,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "day_group_id": "2026-11-23",
+      "source": "fd",
+      "fixture_id": 555093,
+      "market_key": "home",
+      "match": "Botafogo FR - S\u00e3o Paulo FC",
+      "pick": "Botafogo FR \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.34,
+      "model_prob_raw": 0.615,
+      "edge": 19.3,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "day_group_id": "2026-11-23",
+      "source": "fd",
+      "fixture_id": 560649,
+      "market_key": "home",
+      "match": "Brentford FC - Everton FC",
+      "pick": "Brentford FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.42,
+      "model_prob_raw": 0.601,
+      "edge": 18.9,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-23",
+      "day_group_id": "2026-11-23",
+      "source": "fd",
+      "fixture_id": 555099,
+      "market_key": "under25",
+      "match": "Santos FC - Gr\u00eamio FBPA",
+      "pick": "Under 2.5 goals",
+      "odds": 2.62,
+      "model_prob_raw": 0.511,
+      "edge": 11.8,
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
@@ -3979,6 +4047,10 @@
       "balance_delta": 36.26
     },
     "2026-11-21": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-22": {
       "result": "loss",
       "balance_delta": -10.0
     }
