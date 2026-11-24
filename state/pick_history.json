@@ -3777,7 +3777,8 @@
       "data_quality": 3,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "0-2"
     },
     {
       "date": "2026-11-24",
@@ -4118,6 +4119,10 @@
       "balance_delta": -10.0
     },
     "2026-11-22": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-23": {
       "result": "loss",
       "balance_delta": -10.0
     }
