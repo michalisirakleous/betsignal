@@ -3794,7 +3794,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "loss",
+      "final_score": "1-0"
     },
     {
       "date": "2026-11-24",
@@ -3810,7 +3811,8 @@
       "data_quality": 2,
       "h2h_agrees": false,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "2-1"
     },
     {
       "date": "2026-11-24",
@@ -3826,7 +3828,8 @@
       "data_quality": 2,
       "h2h_agrees": null,
       "bookmaker_consensus": true,
-      "result": null
+      "result": "win",
+      "final_score": "1-1"
     },
     {
       "date": "2026-11-24",
@@ -3841,6 +3844,71 @@
       "edge": 31.0,
       "data_quality": 3,
       "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": "win",
+      "final_score": "1-1"
+    },
+    {
+      "date": "2026-11-25",
+      "day_group_id": "2026-11-25",
+      "source": "fd",
+      "fixture_id": 575405,
+      "market_key": "over25",
+      "match": "SK Slavia Praha - Villarreal CF",
+      "pick": "Over 2.5 goals",
+      "odds": 1.67,
+      "model_prob_raw": 0.773,
+      "edge": 18.0,
+      "data_quality": 2,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "day_group_id": "2026-11-25",
+      "source": "fd",
+      "fixture_id": 561962,
+      "market_key": "home",
+      "match": "Stoke City FC - Millwall FC",
+      "pick": "Stoke City FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.2,
+      "model_prob_raw": 0.758,
+      "edge": 30.7,
+      "data_quality": 3,
+      "h2h_agrees": false,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "day_group_id": "2026-11-25",
+      "source": "fd",
+      "fixture_id": 575408,
+      "market_key": "over25",
+      "match": "Paris Saint-Germain FC - AS Roma",
+      "pick": "Over 2.5 goals",
+      "odds": 1.33,
+      "model_prob_raw": 0.735,
+      "edge": 1.8,
+      "data_quality": 3,
+      "h2h_agrees": null,
+      "bookmaker_consensus": true,
+      "result": null
+    },
+    {
+      "date": "2026-11-25",
+      "day_group_id": "2026-11-25",
+      "source": "fd",
+      "fixture_id": 561963,
+      "market_key": "away",
+      "match": "Bolton Wanderers FC - West Bromwich Albion FC",
+      "pick": "West Bromwich Albion FC \u03bd\u03af\u03ba\u03b7",
+      "odds": 2.05,
+      "model_prob_raw": 0.69,
+      "edge": 19.9,
+      "data_quality": 3,
+      "h2h_agrees": false,
       "bookmaker_consensus": true,
       "result": null
     }
@@ -4123,6 +4191,10 @@
       "balance_delta": -10.0
     },
     "2026-11-23": {
+      "result": "loss",
+      "balance_delta": -10.0
+    },
+    "2026-11-24": {
       "result": "loss",
       "balance_delta": -10.0
     }
